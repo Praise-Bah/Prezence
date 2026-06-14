@@ -30,7 +30,6 @@
 - Greptile custom rules configured
 
 ## 🚧 Blockers / Open Decisions
-- Rotate exposed credentials: Supabase service_role key, GitHub PAT, Sentry auth token, and Figma token were pasted in chat during setup and should be regenerated/rotated, then updated in Doppler.
 - supabase-read/write and github/figma MCP servers were removed from `.mcp.json`: Figma's and GitHub Copilot's remote MCP endpoints require personal OAuth (not shareable via Doppler tokens), and `@supabase/mcp-server-supabase` hits a Node 22 ESM resolution bug under `npx` on Windows. Supabase/GitHub/Figma access is currently available via personal claude.ai OAuth connectors only — revisit if team-wide project-level access is needed (e.g. global install of supabase MCP server, or self-hosted github-mcp-server with PAT).
 
 ## 📐 Locked Architectural Decisions
