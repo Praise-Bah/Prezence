@@ -1,5 +1,38 @@
 {
   "mcpServers": {
+    "supabase-read": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:\\Users\\Praise Bah\\.mcp-servers\\supabase\\node_modules\\@supabase\\mcp-server-supabase\\dist\\transports\\stdio.js",
+        "--read-only",
+        "--project-ref=ggjglhekhexsktmihtlo"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${env:SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+    "supabase-write": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:\\Users\\Praise Bah\\.mcp-servers\\supabase\\node_modules\\@supabase\\mcp-server-supabase\\dist\\transports\\stdio.js",
+        "--project-ref=ggjglhekhexsktmihtlo"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${env:SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+    "github": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:\\Users\\Praise Bah\\.mcp-servers\\github\\node_modules\\@modelcontextprotocol\\server-github\\dist\\index.js"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
     "sentry": {
       "command": "npx",
       "args": ["-y", "@sentry/mcp-server", "--organization-slug=${env:SENTRY_ORG}"],

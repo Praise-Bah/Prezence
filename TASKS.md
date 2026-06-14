@@ -8,8 +8,9 @@
 - Monorepo scaffold (Turborepo + pnpm workspaces)
 - CI green on develop (lint-and-test passing)
 - Claude Code skills created (prezence-patterns, nestjs-module, billing-patterns, security-patterns, nestjs-expert)
-- MCP servers configured (.mcp.json: sentry, playwright, context7 — shared, token-based via Doppler)
-- Claude Code CLI installed; Figma, GitHub, Supabase, Sentry, Google Drive connected as personal claude.ai OAuth connectors
+- MCP servers configured (.mcp.json: supabase-read, supabase-write, github — locally-installed stdio servers using Doppler tokens; sentry, playwright, context7 — npx-based)
+- Figma plugin installed (`claude plugin install figma@claude-plugins-official`) — needs one-time OAuth via `/plugin` menu
+- Claude Code CLI installed; Figma, GitHub, Supabase, Sentry, Google Drive also connected as personal claude.ai OAuth connectors
 - Cursor rules created (.cursor/rules/: base, nestjs-api, nextjs-web, debugging, security)
 - Supabase project linked (ref ggjglhekhexsktmihtlo) + pgvector extension enabled (v0.8.0)
 - Doppler project "prezence" / config "dev" populated with all dev secrets
@@ -30,7 +31,15 @@
 - Greptile custom rules configured
 
 ## 🚧 Blockers / Open Decisions
-- supabase-read/write and github/figma MCP servers were removed from `.mcp.json`: Figma's and GitHub Copilot's remote MCP endpoints require personal OAuth (not shareable via Doppler tokens), and `@supabase/mcp-server-supabase` hits a Node 22 ESM resolution bug under `npx` on Windows. Supabase/GitHub/Figma access is currently available via personal claude.ai OAuth connectors only — revisit if team-wide project-level access is needed (e.g. global install of supabase MCP server, or self-hosted github-mcp-server with PAT).
+- supabase-read/write and github MCP servers point to packages installed locally at `~/.mcp-servers/{supabase,github}` (npx hits a Node 22 ESM resolution bug for `@supabase/mcp-server-supabase` on Windows). Each developer must run, once:
+  ```
+  mkdir -p ~/.mcp-servers/supabase && cd ~/.mcp-servers/supabase && npm install @supabase/mcp-server-supabase zod
+  mkdir -p ~/.mcp-servers/github && cd ~/.mcp-servers/github && npm install @modelcontextprotocol/server-github
+  ```
+  and update the absolute paths in `.mcp.json` to match their own home directory (currently hardcoded to `C:\Users\Praise Bah\...`).
+- Figma MCP (`plugin:figma:figma`) shows "Needs authentication" — run `/plugin` in Claude Code, select `figma` under Installed, press Enter to start OAuth, approve in the browser.
+- On Windows + git-bash, `doppler run` sometimes fails with "you must provide a token" due to path-scope matching; fix by passing `--scope 'C:\Users\<you>\Downloads\Prezence'` explicitly.
+- sentry/playwright/context7 MCP servers intermittently show "Failed to connect" during `claude mcp list` health checks — this is npx cold-start latency exceeding the health-check timeout, not a config issue; they reconnect on retry.
 
 ## 📐 Locked Architectural Decisions
 - Flutterwave primary payments (BEAC-licensed Cameroon June 2025)
