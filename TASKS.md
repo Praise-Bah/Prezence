@@ -17,18 +17,25 @@
 - .env.example created at monorepo root
 - supabase/ folder structure created (migrations/, seed/)
 - App dev scripts wrapped with `doppler run --` (apps/api, apps/web), with `:ci` fallbacks
+- Upstash Redis connected and tested
+- OpenRouter API key added and screenshot AI capability verified (model: `anthropic/claude-sonnet-4.6`)
+- Founder MoMo/Orange Money numbers added to Doppler
+- Screenshot payment secrets configured in Doppler
+- shared packages/types created (includes ScreenshotScreeningResult, SubscriptionRequest types)
+- shared packages/config created (includes SCREENING thresholds, QUEUE_NAMES, PLAN_PRICES)
+- Workspace package links wired into api and web apps
+- Full pre-build environment verified
 
 ## 🔄 In Progress
 - NestJS API initial module structure
-- AuthModule: JWT + refresh token rotation
+- AuthModule: JWT + refresh token rotation + rate limiting
 
 ## 📋 Up Next
-- AuthModule: rate limiting
-- AuthModule: complete JWT + refresh token rotation implementation
-- Upstash Redis setup + Doppler secrets
-- OpenRouter integration + Doppler secrets
-- Flutterwave integration + Doppler secrets
-- Greptile custom rules configured
+1. AuthModule — JWT access/refresh tokens, guards, rate limiting, account lockout
+2. Supabase schema migrations — users, subscription_requests, audit_logs
+3. BillingModule — screenshot upload, AI screening, admin review workflow
+4. IntelligenceModule — RAG pipeline, prompt registry, model routing
+5. IntegrationModule — L3A Playwright workers
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at `~/.mcp-servers/{supabase,github}` (npx hits a Node 22 ESM resolution bug for `@supabase/mcp-server-supabase` on Windows). Each developer must run, once:
@@ -40,12 +47,17 @@
 - Figma MCP (`plugin:figma:figma`) shows "Needs authentication" — run `/plugin` in Claude Code, select `figma` under Installed, press Enter to start OAuth, approve in the browser.
 - On Windows + git-bash, `doppler run` sometimes fails with "you must provide a token" due to path-scope matching; fix by passing `--scope 'C:\Users\<you>\Downloads\Prezence'` explicitly.
 - sentry/playwright/context7 MCP servers intermittently show "Failed to connect" during `claude mcp list` health checks — this is npx cold-start latency exceeding the health-check timeout, not a config issue; they reconnect on retry.
+- `SENTRY_DSN_API` was overwritten with a placeholder value (`placeholder_sentry_api_dsn`) per Step 4 — it previously held a real DSN from Step 3. Doppler retains version history if it needs restoring.
+- OpenRouter/Claude model returns markdown-fenced JSON (` ```json ... ``` `) even with `response_format: json_object` — production screenshot-screening code must strip code fences before `JSON.parse`.
 
 ## 📐 Locked Architectural Decisions
-- Flutterwave primary payments (BEAC-licensed Cameroon June 2025)
 - AES-256-GCM envelope encryption for all OAuth tokens
 - Composio rejected — all L1 integrations built directly in NestJS
 - pgvector in PostgreSQL — no separate vector DB
 - OpenRouter for all AI model routing
 - Modular monolith — no microservices until Phase 3
 - Docker Compose for MVP, Swarm for Phase 2, K8s deferred to Phase 3
+- MVP payment: manual screenshot verification via MTN MoMo / Orange Money
+- AI screening: Claude `anthropic/claude-sonnet-4.6` via OpenRouter (strip markdown fences from response before JSON.parse)
+- No Flutterwave keys in dev — placeholder values only until business account approved
+- PaymentService abstraction implemented from day one for zero-refactor Phase 2 migration
