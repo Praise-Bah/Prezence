@@ -5,14 +5,15 @@
 - Branch protection ruleset on main (PR required, squash merge, block force push)
 - CLAUDE.md created
 - TASKS.md created
+- Monorepo scaffold (Turborepo + pnpm workspaces)
 
 ## 🔄 In Progress
-- Monorepo scaffold (Turborepo + pnpm workspaces)
 - NestJS API initial module structure
+- AuthModule: JWT + refresh token rotation
 
 ## 📋 Up Next
 - Supabase project + pgvector setup
-- AuthModule: JWT + refresh token rotation + rate limiting
+- AuthModule: rate limiting
 - Doppler secrets setup
 - Greptile custom rules configured
 
