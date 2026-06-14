@@ -26,7 +26,8 @@ Thumbs.db
 # Editor
 .vscode/settings.json
 .idea/
-.claude/
+.claude/*
+!.claude/skills/
 
 # Logs
 *.log

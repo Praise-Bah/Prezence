@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "supabase-read": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server", "--read-only"],
+      "env": {
+        "SUPABASE_URL": "${env:SUPABASE_URL}",
+        "SUPABASE_KEY": "${env:SUPABASE_ANON_KEY}"
+      }
+    },
+    "supabase-write": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server", "--require-confirmation"],
+      "env": {
+        "SUPABASE_URL": "${env:SUPABASE_URL}",
+        "SUPABASE_KEY": "${env:SUPABASE_SERVICE_ROLE_KEY}"
+      }
+    },
+    "sentry": {
+      "command": "npx",
+      "args": ["-y", "@sentry/mcp-server"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "${env:SENTRY_AUTH_TOKEN}",
+        "SENTRY_ORG": "prezence"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}
