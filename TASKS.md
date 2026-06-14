@@ -2,10 +2,11 @@
 
 ## ✅ Done
 - GitHub repo created (github.com/Praise-Bah/Prezence, private)
-- Branch protection ruleset on main (PR required, squash merge, block force push)
+- Branch protection ruleset on main (PR required, squash merge, block force push, lint-and-test required)
 - CLAUDE.md created
 - TASKS.md created
 - Monorepo scaffold (Turborepo + pnpm workspaces)
+- CI green on develop (lint-and-test passing)
 
 ## 🔄 In Progress
 - NestJS API initial module structure
