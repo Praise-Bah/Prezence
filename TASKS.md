@@ -8,23 +8,29 @@
 - Monorepo scaffold (Turborepo + pnpm workspaces)
 - CI green on develop (lint-and-test passing)
 - Claude Code skills created (prezence-patterns, nestjs-module, billing-patterns, security-patterns, nestjs-expert)
-- MCP servers configured (.mcp.json: supabase-read, supabase-write, sentry, playwright, context7)
+- MCP servers configured (.mcp.json: supabase-read, supabase-write, sentry, playwright, context7, github, figma)
 - Cursor rules created (.cursor/rules/: base, nestjs-api, nextjs-web, debugging, security)
+- Supabase project linked (ref ggjglhekhexsktmihtlo) + pgvector extension enabled (v0.8.0)
+- Doppler project "prezence" / config "dev" populated with all dev secrets
+- .env.example created at monorepo root
+- supabase/ folder structure created (migrations/, seed/)
+- App dev scripts wrapped with `doppler run --` (apps/api, apps/web), with `:ci` fallbacks
 
 ## 🔄 In Progress
 - NestJS API initial module structure
 - AuthModule: JWT + refresh token rotation
 
 ## 📋 Up Next
-- Figma MCP plugin install + authentication (manual — `claude` CLI not available in this environment)
-- Context7 MCP global registration + `claude mcp list` verification (manual — `claude` CLI not available in this environment)
-- Supabase project + pgvector setup
 - AuthModule: rate limiting
-- Doppler secrets setup
+- AuthModule: complete JWT + refresh token rotation implementation
+- Upstash Redis setup + Doppler secrets
+- OpenRouter integration + Doppler secrets
+- Flutterwave integration + Doppler secrets
 - Greptile custom rules configured
 
 ## 🚧 Blockers / Open Decisions
-- `claude` CLI binary not available in this VSCode-extension environment — blocks `claude plugin install` and `claude mcp add/list` commands. Run these manually from a terminal with the Claude Code CLI installed.
+- `claude` CLI binary not available in this VSCode-extension environment — blocks `claude plugin install` and `claude mcp add/list` commands. GitHub and Figma MCP servers were added manually to `.mcp.json` (merged, not overwritten) and need verification via `claude mcp list` from a terminal with the Claude Code CLI installed.
+- Rotate exposed credentials: Supabase service_role key, GitHub PAT, Sentry auth token, and Figma token were pasted in chat during setup and should be regenerated/rotated, then updated in Doppler.
 
 ## 📐 Locked Architectural Decisions
 - Flutterwave primary payments (BEAC-licensed Cameroon June 2025)

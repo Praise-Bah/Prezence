@@ -12,9 +12,19 @@ dist/
 .env.local
 .env.*.local
 *.env
+.env.*
+!.env.example
 
 # Secrets
 .doppler/
+
+# Supabase
+.supabase/
+supabase/.temp/
+supabase/.branches/
+
+# Figma
+.figma-cache/
 
 # Turbo cache
 .turbo/
