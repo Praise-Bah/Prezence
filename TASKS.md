@@ -25,6 +25,9 @@
 - shared packages/config created (includes SCREENING thresholds, QUEUE_NAMES, PLAN_PRICES)
 - Workspace package links wired into api and web apps
 - Full pre-build environment verified
+- Branch automation workflows created
+  (develop→staging auto-PR, staging→main auto-PR, production deploy notification)
+- GitHub labels created (automated, staging-deploy, production-deploy)
 
 ## 🔄 In Progress
 - NestJS API initial module structure
@@ -49,6 +52,7 @@
 - sentry/playwright/context7 MCP servers intermittently show "Failed to connect" during `claude mcp list` health checks — this is npx cold-start latency exceeding the health-check timeout, not a config issue; they reconnect on retry.
 - `SENTRY_DSN_API` was overwritten with a placeholder value (`placeholder_sentry_api_dsn`) per Step 4 — it previously held a real DSN from Step 3. Doppler retains version history if it needs restoring.
 - OpenRouter/Claude model returns markdown-fenced JSON (` ```json ... ``` `) even with `response_format: json_object` — production screenshot-screening code must strip code fences before `JSON.parse`.
+- Staging branch protection (require lint-and-test + 1 approving review) not yet applied — `gh api PUT repos/Praise-Bah/Prezence/branches/staging/protection` failed repeatedly with network/TLS errors (flaky connection on dev machine). Retry once network is stable.
 
 ## 📐 Locked Architectural Decisions
 - AES-256-GCM envelope encryption for all OAuth tokens
@@ -61,3 +65,6 @@
 - AI screening: Claude `anthropic/claude-sonnet-4.6` via OpenRouter (strip markdown fences from response before JSON.parse)
 - No Flutterwave keys in dev — placeholder values only until business account approved
 - PaymentService abstraction implemented from day one for zero-refactor Phase 2 migration
+- Branch promotion is automated via GitHub Actions
+- Manual approval required at each stage (develop→staging, staging→main)
+- Nothing merges to main without explicit developer approval
