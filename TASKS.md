@@ -28,6 +28,7 @@
 - Branch automation workflows created
   (develop→staging auto-PR, staging→main auto-PR, production deploy notification)
 - GitHub labels created (automated, staging-deploy, production-deploy)
+- Staging branch protection added (require lint-and-test + 1 approving review)
 
 ## 🔄 In Progress
 - NestJS API initial module structure
@@ -52,7 +53,6 @@
 - sentry/playwright/context7 MCP servers intermittently show "Failed to connect" during `claude mcp list` health checks — this is npx cold-start latency exceeding the health-check timeout, not a config issue; they reconnect on retry.
 - `SENTRY_DSN_API` was overwritten with a placeholder value (`placeholder_sentry_api_dsn`) per Step 4 — it previously held a real DSN from Step 3. Doppler retains version history if it needs restoring.
 - OpenRouter/Claude model returns markdown-fenced JSON (` ```json ... ``` `) even with `response_format: json_object` — production screenshot-screening code must strip code fences before `JSON.parse`.
-- Staging branch protection (require lint-and-test + 1 approving review) not yet applied — `gh api PUT repos/Praise-Bah/Prezence/branches/staging/protection` failed repeatedly with network/TLS errors (flaky connection on dev machine). Retry once network is stable.
 
 ## 📐 Locked Architectural Decisions
 - AES-256-GCM envelope encryption for all OAuth tokens
