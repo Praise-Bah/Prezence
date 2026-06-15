@@ -38,6 +38,7 @@ Thumbs.db
 .idea/
 .claude/*
 !.claude/skills/
+apps/mobile/.claude/
 
 # Logs
 *.log

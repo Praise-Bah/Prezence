@@ -45,3 +45,12 @@ if (hash !== req.headers['verif-hash']) {
 ## Manual fallback (MVP only)
 During beta, support team can manually activate subscriptions via
 admin endpoint after verifying MoMo/Orange transaction in Flutterwave dashboard.
+
+## OpenRouter JSON parsing — always strip fences
+Claude via OpenRouter may wrap JSON in ```json fences even with
+response_format: json_object. Always strip before parsing:
+
+```typescript
+const clean = response.replace(/```json\n?|\n?```/g, '').trim();
+const result: ScreenshotScreeningResult = JSON.parse(clean);
+```
