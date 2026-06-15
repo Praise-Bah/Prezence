@@ -66,5 +66,12 @@ exported service. No circular imports.
 4. After fixing, update this CLAUDE.md if the fix reveals a missing rule
 5. Update TASKS.md to mark the bug resolved
 
+## Before Every Commit
+- Always run `pnpm lint && pnpm typecheck` from the root before committing
+  anything that touches config, package.json, or CI files
+- Always run `gh run list --branch develop --limit 1` and wait for green
+  after every push
+- Never declare a task done until CI is confirmed green
+
 ## What We Are Building Right Now
 See TASKS.md for current sprint status.
