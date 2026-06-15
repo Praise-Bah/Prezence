@@ -29,6 +29,11 @@
   (develop→staging auto-PR, staging→main auto-PR, production deploy notification)
 - GitHub labels created (automated, staging-deploy, production-deploy)
 - Staging branch protection added (require lint-and-test + 1 approving review)
+- Phase 0 database foundation merged (PR #4): 12 Supabase migrations covering
+  users, subscription_requests, platform_connections, profile_data,
+  automation_jobs, market_scores, ai_embeddings/prompt_registry, audit_logs,
+  payment_events — all RLS-enabled, applied to project ggjglhekhexsktmihtlo,
+  security/performance advisors clean
 
 ## 🔄 In Progress
 - NestJS API initial module structure
@@ -36,10 +41,9 @@
 
 ## 📋 Up Next
 1. AuthModule — JWT access/refresh tokens, guards, rate limiting, account lockout
-2. Supabase schema migrations — users, subscription_requests, audit_logs
-3. BillingModule — screenshot upload, AI screening, admin review workflow
-4. IntelligenceModule — RAG pipeline, prompt registry, model routing
-5. IntegrationModule — L3A Playwright workers
+2. BillingModule — screenshot upload, AI screening, admin review workflow
+3. IntelligenceModule — RAG pipeline, prompt registry, model routing
+4. IntegrationModule — L3A Playwright workers
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at `~/.mcp-servers/{supabase,github}` (npx hits a Node 22 ESM resolution bug for `@supabase/mcp-server-supabase` on Windows). Each developer must run, once:
