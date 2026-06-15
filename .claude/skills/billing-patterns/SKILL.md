@@ -43,8 +43,10 @@ if (hash !== req.headers['verif-hash']) {
 ```
 
 ## Manual fallback (MVP only)
-During beta, support team can manually activate subscriptions via
-admin endpoint after verifying MoMo/Orange transaction in Flutterwave dashboard.
+During beta, the founder verifies payment by checking the MTN MoMo or
+Orange Money account directly (app/SMS confirmation) that the transaction
+matching the user's screenshot actually arrived, then manually activates
+the subscription via an admin endpoint.
 
 ## OpenRouter JSON parsing — always strip fences
 Claude via OpenRouter may wrap JSON in ```json fences even with
