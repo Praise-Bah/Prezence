@@ -25,6 +25,10 @@
 - shared packages/config created (includes SCREENING thresholds, QUEUE_NAMES, PLAN_PRICES)
 - Workspace package links wired into api and web apps
 - Full pre-build environment verified
+- Branch automation workflows created
+  (develop→staging auto-PR, staging→main auto-PR, production deploy notification)
+- GitHub labels created (automated, staging-deploy, production-deploy)
+- Staging branch protection added (require lint-and-test + 1 approving review)
 
 ## 🔄 In Progress
 - NestJS API initial module structure
@@ -61,3 +65,6 @@
 - AI screening: Claude `anthropic/claude-sonnet-4.6` via OpenRouter (strip markdown fences from response before JSON.parse)
 - No Flutterwave keys in dev — placeholder values only until business account approved
 - PaymentService abstraction implemented from day one for zero-refactor Phase 2 migration
+- Branch promotion is automated via GitHub Actions
+- Manual approval required at each stage (develop→staging, staging→main)
+- Nothing merges to main without explicit developer approval

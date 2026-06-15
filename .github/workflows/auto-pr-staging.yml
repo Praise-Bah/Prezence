@@ -1,0 +1,77 @@
+name: Auto PR - develop to staging
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  create-staging-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if PR already exists
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list \
+            --base staging \
+            --head develop \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+          echo "existing=$EXISTING" >> $GITHUB_OUTPUT
+
+      - name: Get latest commit info
+        id: commit-info
+        run: |
+          echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+          echo "author=$(git log -1 --pretty=%an)" >> $GITHUB_OUTPUT
+          echo "sha=$(git log -1 --pretty=%h)" >> $GITHUB_OUTPUT
+
+      - name: Create PR if none exists
+        if: steps.check-pr.outputs.existing == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base staging \
+            --head develop \
+            --title "Deploy to Staging - ${{ steps.commit-info.outputs.sha }}" \
+            --body "## Automated Staging Deployment
+
+          **Triggered by:** Push to \`develop\`
+          **Latest commit:** ${{ steps.commit-info.outputs.message }}
+          **Author:** ${{ steps.commit-info.outputs.author }}
+          **SHA:** \`${{ steps.commit-info.outputs.sha }}\`
+
+          ---
+
+          ### Before approving, verify:
+          - [ ] CI is green on this PR
+          - [ ] Greptile has reviewed and has no blockers
+          - [ ] The feature works as expected on develop
+
+          ### After merging:
+          Railway will automatically deploy to staging.
+          Check staging.prezence.app before approving the main PR.
+
+          ---
+          *This PR was created automatically. Only merge when ready to deploy to staging.*" \
+            --label "automated,staging-deploy"
+
+      - name: Update existing PR description
+        if: steps.check-pr.outputs.existing != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ steps.check-pr.outputs.existing }} \
+            --body "New commit pushed to develop: **${{ steps.commit-info.outputs.message }}** (\`${{ steps.commit-info.outputs.sha }}\`)"
