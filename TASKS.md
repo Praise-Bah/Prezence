@@ -38,15 +38,20 @@
   access tokens (15 min) + refresh tokens (7 days) with rotation and reuse-detection;
   Redis lockout (5 fails → 15 min) + rate limiting; global JWT/Roles/RateLimit guard
   chain; 29 unit tests; CI green
+- BillingModule merged (PR #7): "Send & Prove" two-step payment flow (MTN MoMo /
+  Orange Money → screenshot upload → Cloudflare R2 → BullMQ AI screening job →
+  OpenRouter Claude Sonnet vision → auto-approve / provisional / reject); admin
+  review endpoints (system_admin / support roles); migration 20260616120001 applied;
+  6 unit tests; CI green
 
 ## 🔄 In Progress
-- NestJS API initial module structure
+- develop → staging promotion (auto-PR created, awaiting CI + manual merge)
 
 ## 📋 Up Next
-1. Apply auth migrations via Cursor+Supabase MCP (20260616090001, 20260616090002) and verify advisors clean
-2. BillingModule — screenshot upload, AI screening, admin review workflow
-3. IntelligenceModule — RAG pipeline, prompt registry, model routing
-4. IntegrationModule — L3A Playwright workers
+1. Merge develop → staging → main (same flow as AuthModule)
+2. IntelligenceModule — RAG pipeline, prompt registry, model routing (OpenRouter)
+3. IntegrationModule — L3A Playwright workers (BullMQ, Smartproxy)
+4. IVFFlat → HNSW index fix on ai_embeddings (Greptile comment from PR #4, deferred)
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at `~/.mcp-servers/{supabase,github}` (npx hits a Node 22 ESM resolution bug for `@supabase/mcp-server-supabase` on Windows). Each developer must run, once:
