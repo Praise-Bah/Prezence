@@ -39,10 +39,10 @@ class EnvironmentVariables {
   R2_PUBLIC_URL!: string;
 
   @IsNotEmpty()
-  MOMO_PAYMENT_NUMBER!: string;
+  FOUNDER_MTN_NUMBER!: string;
 
   @IsNotEmpty()
-  ORANGE_PAYMENT_NUMBER!: string;
+  FOUNDER_ORANGE_NUMBER!: string;
 
   @IsOptional()
   @IsIn(['development', 'test', 'production'])

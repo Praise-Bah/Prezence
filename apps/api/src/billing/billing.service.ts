@@ -168,7 +168,7 @@ export class BillingService {
 
   private getRecipientNumber(method: 'mtn_momo' | 'orange_money'): string {
     const key =
-      method === 'mtn_momo' ? 'MOMO_PAYMENT_NUMBER' : 'ORANGE_PAYMENT_NUMBER';
+      method === 'mtn_momo' ? 'FOUNDER_MTN_NUMBER' : 'FOUNDER_ORANGE_NUMBER';
     return this.config.getOrThrow<string>(key);
   }
 }
