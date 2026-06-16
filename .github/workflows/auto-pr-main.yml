@@ -1,0 +1,87 @@
+name: Auto PR - staging to main
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  create-main-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if PR already exists
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list \
+            --base main \
+            --head staging \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+          echo "existing=$EXISTING" >> $GITHUB_OUTPUT
+
+      - name: Get commit count since last main merge
+        id: commit-count
+        run: |
+          COUNT=$(git log origin/main..HEAD --oneline | wc -l)
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Get changelog since last main merge
+        id: changelog
+        run: |
+          CHANGES=$(git log origin/main..HEAD --pretty="- %s" | head -20)
+          echo "changes<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create production PR if none exists
+        if: steps.check-pr.outputs.existing == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head staging \
+            --title "Production Release - ${{ steps.commit-count.outputs.count }} changes" \
+            --body "## Production Deployment
+
+          **Changes in this release (${{ steps.commit-count.outputs.count }} commits):**
+
+          ${{ steps.changelog.outputs.changes }}
+
+          ---
+
+          ### Pre-production checklist:
+          - [ ] Staging has been tested manually
+          - [ ] All features work correctly on staging.prezence.app
+          - [ ] No console errors on staging
+          - [ ] Payment screenshot flow tested end-to-end
+          - [ ] AI interview tested end-to-end
+          - [ ] CI is green
+          - [ ] Greptile approved
+
+          ### This merges to PRODUCTION
+          Only approve when you are fully satisfied with staging.
+
+          ---
+          *This PR was created automatically when staging was updated.*" \
+            --label "automated,production-deploy" \
+            --reviewer "Praise-Bah"
+
+      - name: Comment on existing PR
+        if: steps.check-pr.outputs.existing != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ steps.check-pr.outputs.existing }} \
+            --body "Staging updated with new changes. Re-test before approving production."
