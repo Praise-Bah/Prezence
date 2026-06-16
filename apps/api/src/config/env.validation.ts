@@ -20,6 +20,30 @@ class EnvironmentVariables {
   @IsNotEmpty()
   REDIS_URL!: string;
 
+  @IsNotEmpty()
+  OPENROUTER_API_KEY!: string;
+
+  @IsNotEmpty()
+  R2_ACCOUNT_ID!: string;
+
+  @IsNotEmpty()
+  R2_ACCESS_KEY_ID!: string;
+
+  @IsNotEmpty()
+  R2_SECRET_ACCESS_KEY!: string;
+
+  @IsNotEmpty()
+  R2_BUCKET_NAME!: string;
+
+  @IsNotEmpty()
+  R2_PUBLIC_URL!: string;
+
+  @IsNotEmpty()
+  MOMO_PAYMENT_NUMBER!: string;
+
+  @IsNotEmpty()
+  ORANGE_PAYMENT_NUMBER!: string;
+
   @IsOptional()
   @IsIn(['development', 'test', 'production'])
   NODE_ENV?: string;

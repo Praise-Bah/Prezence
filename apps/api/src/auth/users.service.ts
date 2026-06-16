@@ -25,6 +25,13 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
+  async updatePlan(
+    userId: string,
+    plan: import('@prezence/types').SubscriptionPlan,
+  ): Promise<void> {
+    await this.usersRepository.update(userId, { plan });
+  }
+
   async create(input: CreateUserInput): Promise<User> {
     const user = this.usersRepository.create({
       email: input.email,
