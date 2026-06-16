@@ -34,13 +34,16 @@
   automation_jobs, market_scores, ai_embeddings/prompt_registry, audit_logs,
   payment_events — all RLS-enabled, applied to project ggjglhekhexsktmihtlo,
   security/performance advisors clean
+- AuthModule merged (PR #5): custom JWT auth decoupled from Supabase auth.users;
+  access tokens (15 min) + refresh tokens (7 days) with rotation and reuse-detection;
+  Redis lockout (5 fails → 15 min) + rate limiting; global JWT/Roles/RateLimit guard
+  chain; 29 unit tests; CI green
 
 ## 🔄 In Progress
 - NestJS API initial module structure
-- AuthModule: JWT + refresh token rotation + rate limiting
 
 ## 📋 Up Next
-1. AuthModule — JWT access/refresh tokens, guards, rate limiting, account lockout
+1. Apply auth migrations via Cursor+Supabase MCP (20260616090001, 20260616090002) and verify advisors clean
 2. BillingModule — screenshot upload, AI screening, admin review workflow
 3. IntelligenceModule — RAG pipeline, prompt registry, model routing
 4. IntegrationModule — L3A Playwright workers
