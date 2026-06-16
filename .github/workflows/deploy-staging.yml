@@ -1,0 +1,31 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm build --filter=api
+
+      - name: Build Web
+        run: pnpm build --filter=web
+
+      - name: Deploy to Railway (staging)
+        run: echo "Railway deploy hook goes here — add RAILWAY_TOKEN to GitHub Secrets later"

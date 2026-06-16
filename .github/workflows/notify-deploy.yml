@@ -1,0 +1,29 @@
+name: Notify on Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get deploy info
+        id: info
+        run: |
+          echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+          echo "sha=$(git log -1 --pretty=%h)" >> $GITHUB_OUTPUT
+          echo "time=$(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_OUTPUT
+
+      - name: Create deployment summary
+        run: |
+          echo "## Production Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** ${{ steps.info.outputs.time }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ steps.info.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Message:** ${{ steps.info.outputs.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View production](https://prezence.app)" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,40 @@
+---
+description: NestJS API rules — auto-loads for all backend files
+globs: apps/api/**
+---
+
+# NestJS API patterns
+
+## Module structure
+Every module must have: module.ts, controller.ts, service.ts,
+dto/ folder, entities/ folder, index.ts, and a spec.ts test file.
+
+## DTOs
+Always use class-validator decorators. Every controller input needs a DTO.
+```typescript
+import { IsString, IsEmail, MinLength } from 'class-validator';
+export class CreateUserDto {
+  @IsEmail() email: string;
+  @IsString() @MinLength(8) password: string;
+}
+```
+
+## Guards
+Protect all authenticated routes with JwtAuthGuard.
+Use RolesGuard for RBAC (User, InstitutionalAdmin, Support, SystemAdmin).
+
+## Error handling
+Use NestJS built-in HttpException classes. Never throw raw JS errors.
+```typescript
+throw new NotFoundException(`User ${id} not found`);
+throw new UnauthorizedException('Invalid credentials');
+throw new BadRequestException('Validation failed');
+```
+
+## Async jobs
+All browser automation and long tasks — BullMQ queue.
+Return job_id immediately. Push status updates via WebSocket.
+
+## Database
+TypeORM with parameterized queries only.
+No raw SQL string interpolation. Ever.

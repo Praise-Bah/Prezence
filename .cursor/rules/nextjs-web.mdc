@@ -1,0 +1,40 @@
+---
+description: Next.js frontend rules — auto-loads for all web files
+globs: apps/web/**
+---
+
+# Next.js frontend patterns
+
+## App Router only
+Use App Router exclusively. No pages/ directory patterns.
+Default to React Server Components.
+Add "use client" only when interactivity is required.
+
+## Styling
+Tailwind CSS only. No inline styles. No CSS modules. No styled-components.
+
+## Images — performance critical
+```tsx
+// Always use next/image
+import Image from 'next/image';
+
+// Always specify width and height (prevents CLS)
+<Image src={url} alt="description" width={640} height={480} />
+
+// For user-uploaded images use picture with AVIF first
+<picture>
+  <source type="image/avif" srcSet="image.avif" />
+  <source type="image/webp" srcSet="image.webp" />
+  <img src="image.jpg" alt="..." width={640} height={480} loading="lazy" />
+</picture>
+```
+
+## Performance budgets
+- Landing page: max 500KB total (HTML + CSS + JS + critical images)
+- Dashboard: max 800KB total
+- Never import a heavy library without checking bundle impact first
+- Use next/dynamic with ssr:false for heavy client-only components
+
+## Data fetching
+Prefer server-side data fetching in Server Components.
+Use React Query or SWR only for real-time client-side data.

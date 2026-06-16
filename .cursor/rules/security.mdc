@@ -1,0 +1,34 @@
+---
+description: Security rules — auto-loads for auth and billing files
+globs: apps/api/src/auth/**,apps/api/src/billing/**
+---
+
+# Security patterns
+
+## Token handling
+- JWT access tokens: 15-minute expiry
+- JWT refresh tokens: 7-day expiry, rotate on every use
+- Refresh token reuse → invalidate entire session immediately
+- Never return raw tokens in error responses
+- Never log Authorization headers or token values
+
+## Encryption
+- All OAuth tokens: AES-256-GCM envelope encryption
+- Unique data encryption key (DEK) per user
+- Master key stored in Doppler only, never in code or .env
+
+## Webhook verification
+Always verify signatures before processing any webhook:
+- Flutterwave: HMAC-SHA256 against verif-hash header
+- Paystack: HMAC-SHA512 against X-Paystack-Signature header
+- Return 401 immediately if signature fails — do not process
+
+## Rate limiting
+- Authenticated routes: 100 req / 15 min / user
+- Unauthenticated routes: 20 req / 15 min / IP
+- Auth endpoints: 5 attempts / 15 min / IP → lockout
+
+## Forbidden patterns
+- Never use Math.random() for tokens — use crypto.randomBytes()
+- Never skip signature verification "just for testing"
+- Never hardcode secrets — all secrets from Doppler via process.env

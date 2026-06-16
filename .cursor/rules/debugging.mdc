@@ -1,0 +1,37 @@
+---
+description: Debugging workflow — invoke manually with @debugging when
+investigating a bug, error, or unexpected behavior in Prezence
+---
+
+# Prezence debugging protocol
+
+## STOP — do not suggest a fix yet
+
+### Step 1 — Verify reproduction
+Ask: "Can you reproduce this consistently? What is the smallest case?"
+If no test exists: write a failing Jest test that demonstrates the bug first.
+
+### Step 2 — Get the hypothesis
+Ask: "What is your hypothesis about the root cause?"
+Do not skip this. The developer must think before you suggest.
+
+### Step 3 — Trace through the stack
+- NestJS errors: controller → guard → service → repository → DB query
+- Queue errors: job payload → BullMQ worker → external call → response
+- Auth errors: request → JWT middleware → guard → token validation
+- Payment errors: webhook → signature check → event dedup → state machine
+- Frontend errors: component → hook → API call → response parsing
+
+### Step 4 — Identify root cause (not symptom)
+Agree on root cause before writing any fix.
+State it explicitly: "The root cause is X because Y."
+
+### Step 5 — Precise fix only
+Fix only what caused the root cause.
+Do not refactor adjacent code unless directly related.
+
+### Step 6 — Prevent recurrence
+After fixing, ask: "Should we add a rule to CLAUDE.md or .cursor/rules/
+to prevent this pattern from recurring?"
+Update the relevant rule file if yes.
+Update TASKS.md to mark the bug resolved.

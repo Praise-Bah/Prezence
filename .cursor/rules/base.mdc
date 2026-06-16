@@ -1,0 +1,34 @@
+---
+description: Base Prezence rules — always active in every file
+alwaysApply: true
+---
+
+# Prezence base rules
+
+## Monorepo commands — always use pnpm + filter
+```bash
+pnpm dev --filter=api      # run NestJS only
+pnpm dev --filter=web      # run Next.js only
+pnpm dev                   # run everything
+pnpm test --filter=api     # test NestJS only
+pnpm lint                  # lint everything
+pnpm build                 # build everything
+```
+Never use npm or yarn. Never run commands without --filter unless intentional.
+
+## TypeScript
+- Strict mode everywhere. Never use `any` type.
+- Always type function return values explicitly.
+- Use Zod for runtime validation at API boundaries.
+
+## Git
+- Never push directly to main.
+- Always work on feature/xxx or fix/xxx branches.
+- All PRs merge into develop, not main.
+- Commit messages: "feat:", "fix:", "chore:", "refactor:", "test:"
+
+## Hard rules
+- Never call payment gateways directly — always PaymentService
+- Never store OAuth tokens without AES-256-GCM encryption
+- Never use console.log in source — use NestJS Logger
+- Never commit .env files or hardcoded secrets
