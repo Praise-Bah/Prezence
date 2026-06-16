@@ -20,6 +20,30 @@ class EnvironmentVariables {
   @IsNotEmpty()
   REDIS_URL!: string;
 
+  @IsNotEmpty()
+  OPENROUTER_API_KEY!: string;
+
+  @IsNotEmpty()
+  R2_ACCOUNT_ID!: string;
+
+  @IsNotEmpty()
+  R2_ACCESS_KEY_ID!: string;
+
+  @IsNotEmpty()
+  R2_SECRET_ACCESS_KEY!: string;
+
+  @IsNotEmpty()
+  R2_BUCKET_NAME!: string;
+
+  @IsNotEmpty()
+  R2_PUBLIC_URL!: string;
+
+  @IsNotEmpty()
+  FOUNDER_MTN_NUMBER!: string;
+
+  @IsNotEmpty()
+  FOUNDER_ORANGE_NUMBER!: string;
+
   @IsOptional()
   @IsIn(['development', 'test', 'production'])
   NODE_ENV?: string;
