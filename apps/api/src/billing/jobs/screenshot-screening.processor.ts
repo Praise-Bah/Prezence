@@ -57,23 +57,41 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
     if (result.score >= SCREENING.confidence.HIGH) {
       newStatus = 'provisional';
       await this.usersService.updatePlan(userId, plan);
-      await this.notificationService.sendPaymentApproved(userId, plan);
+      try {
+        await this.notificationService.sendPaymentApproved(userId, plan);
+      } catch (notifyErr) {
+        this.logger.warn(
+          `Failed to enqueue payment_approved notification for user ${userId}: ${String(notifyErr)}`,
+        );
+      }
       this.logger.log(
         `Auto-approved request ${requestId} — upgrading user ${userId} to ${plan}`,
       );
     } else if (result.score >= SCREENING.confidence.MEDIUM) {
       newStatus = 'provisional';
       await this.usersService.updatePlan(userId, plan);
-      await this.notificationService.sendPaymentApproved(userId, plan);
+      try {
+        await this.notificationService.sendPaymentApproved(userId, plan);
+      } catch (notifyErr) {
+        this.logger.warn(
+          `Failed to enqueue payment_approved notification for user ${userId}: ${String(notifyErr)}`,
+        );
+      }
       this.logger.log(
         `Provisional grant for request ${requestId} — flagged for admin review`,
       );
     } else {
       newStatus = 'rejected';
-      await this.notificationService.sendPaymentRejected(
-        userId,
-        result.rejection_reason ?? 'Screenshot could not be verified',
-      );
+      try {
+        await this.notificationService.sendPaymentRejected(
+          userId,
+          result.rejection_reason ?? 'Screenshot could not be verified',
+        );
+      } catch (notifyErr) {
+        this.logger.warn(
+          `Failed to enqueue payment_rejected notification for user ${userId}: ${String(notifyErr)}`,
+        );
+      }
       this.logger.warn(`Request ${requestId} rejected — score ${result.score}`);
     }
 
