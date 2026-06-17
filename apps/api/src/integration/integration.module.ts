@@ -30,6 +30,6 @@ import { IntegrationService } from './integration.service';
     L3aPlaywrightStrategy,
     AutomationProcessor,
   ],
-  exports: [IntegrationService],
+  exports: [IntegrationService, TokenVaultService],
 })
 export class IntegrationModule {}

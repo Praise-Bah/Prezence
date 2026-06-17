@@ -4,8 +4,7 @@ import type { Redis } from 'ioredis';
 import { Repository } from 'typeorm';
 import { CACHE_TTL } from '@prezence/config';
 import type { SupportedPlatform } from '@prezence/types';
-import { PlatformConnection } from '../integration';
-import { TokenVaultService } from '../integration/services/token-vault.service';
+import { PlatformConnection, TokenVaultService } from '../integration';
 import { REDIS_CLIENT } from '../redis/redis.constants';
 import { GithubChecker } from './checkers/github.checker';
 import { PlatformHealthCheck } from './entities/platform-health-check.entity';
@@ -91,7 +90,7 @@ export class PlatformHealthService {
       };
     }
 
-    // Persist the health check result
+    // Persist the health check result; use the returned entity so @CreateDateColumn is populated
     const check = this.healthRepo.create({
       userId,
       platform,
@@ -99,7 +98,7 @@ export class PlatformHealthService {
       responseMs: result.responseMs,
       errorMessage: result.errorMessage,
     });
-    await this.healthRepo.save(check);
+    const saved = await this.healthRepo.save(check);
 
     // Mark connection as expired if token was rejected
     if (result.status === 'token_expired') {
@@ -113,34 +112,32 @@ export class PlatformHealthService {
       platform,
       status: result.status,
       responseMs: result.responseMs,
-      checkedAt: check.checkedAt,
+      checkedAt: saved.checkedAt,
       errorMessage: result.errorMessage,
     };
   }
 
   async getLatest(userId: string): Promise<PlatformHealthSummary[]> {
-    const connections = await this.connectionRepo.find({ where: { userId } });
+    const connections = await this.connectionRepo.find({
+      where: { userId, status: 'active' },
+    });
     if (connections.length === 0) return [];
 
-    const platforms = connections.map((c) => c.platform);
-    const summaries: PlatformHealthSummary[] = [];
+    // Single query: latest check per platform using DISTINCT ON
+    const rows = await this.healthRepo
+      .createQueryBuilder('h')
+      .where('h.userId = :userId', { userId })
+      .distinctOn(['h.platform'])
+      .orderBy('h.platform', 'ASC')
+      .addOrderBy('h.checkedAt', 'DESC')
+      .getMany();
 
-    for (const platform of platforms) {
-      const latest = await this.healthRepo.findOne({
-        where: { userId, platform },
-        order: { checkedAt: 'DESC' },
-      });
-      if (latest) {
-        summaries.push({
-          platform,
-          status: latest.status,
-          responseMs: latest.responseMs,
-          checkedAt: latest.checkedAt,
-          errorMessage: latest.errorMessage,
-        });
-      }
-    }
-
-    return summaries;
+    return rows.map((r) => ({
+      platform: r.platform,
+      status: r.status,
+      responseMs: r.responseMs,
+      checkedAt: r.checkedAt,
+      errorMessage: r.errorMessage,
+    }));
   }
 }
