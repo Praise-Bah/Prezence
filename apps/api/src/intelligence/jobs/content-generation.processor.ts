@@ -18,6 +18,7 @@ import type {
 import { InterviewResponse } from '../entities/interview-response.entity';
 import { MarketScore } from '../entities/market-score.entity';
 import { ProfileData } from '../entities/profile-data.entity';
+import { NotificationService } from '../../notification';
 import { EmbeddingService } from '../services/embedding.service';
 import { ModelRouterService } from '../services/model-router.service';
 import { PromptRegistryService } from '../services/prompt-registry.service';
@@ -43,6 +44,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     private readonly modelRouter: ModelRouterService,
     private readonly promptRegistry: PromptRegistryService,
     private readonly embeddingService: EmbeddingService,
+    private readonly notificationService: NotificationService,
     @Inject('REDIS_CLIENT')
     private readonly redis: Redis,
   ) {
@@ -50,17 +52,33 @@ export class ContentGenerationProcessor extends WorkerHost {
   }
 
   async process(job: Job<ContentGenerationJobData>): Promise<void> {
+    const { userId, platform } = job.data;
+    this.logger.log(
+      `Processing generation job ${job.id} — ${platform} for user ${userId}`,
+    );
+
+    try {
+      await this.run(job.data);
+    } catch (err) {
+      try {
+        await this.notificationService.sendContentFailed(userId, platform);
+      } catch (notifyErr) {
+        this.logger.warn(
+          `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,
+        );
+      }
+      throw err;
+    }
+  }
+
+  private async run(data: ContentGenerationJobData): Promise<void> {
     const {
       userId,
       platform,
       interviewResponseId,
       interviewVersion,
       userLanguage,
-    } = job.data;
-
-    this.logger.log(
-      `Processing generation job ${job.id} — ${platform} for user ${userId}`,
-    );
+    } = data;
 
     // 1. Load interview answers
     const interview = await this.interviewRepo.findOne({
@@ -127,9 +145,7 @@ export class ContentGenerationProcessor extends WorkerHost {
         stripCodeFences(rawGenerated),
       ) as GeneratedSections;
     } catch {
-      this.logger.error(
-        `Generation JSON parse failed for job ${job.id}: ${rawGenerated}`,
-      );
+      this.logger.error(`Generation JSON parse failed: ${rawGenerated}`);
       throw new Error('Content generation returned invalid JSON');
     }
 
@@ -154,9 +170,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     try {
       qa = JSON.parse(stripCodeFences(rawQa)) as QaResult;
     } catch {
-      this.logger.warn(
-        `QA JSON parse failed for job ${job.id} — defaulting score to 50`,
-      );
+      this.logger.warn(`QA JSON parse failed — defaulting score to 50`);
       qa = {
         quality_score: 50,
         passes_constraints: true,
@@ -224,8 +238,20 @@ export class ContentGenerationProcessor extends WorkerHost {
       CACHE_TTL.generated_profile,
     );
 
+    try {
+      await this.notificationService.sendContentReady(
+        userId,
+        platform,
+        qa.quality_score,
+      );
+    } catch (notifyErr) {
+      this.logger.warn(
+        `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,
+      );
+    }
+
     this.logger.log(
-      `Generation complete for job ${job.id} — quality: ${String(qa.quality_score)}, market: ${String(overallScore)}`,
+      `Generation complete for job — quality: ${String(qa.quality_score)}, market: ${String(overallScore)}`,
     );
   }
 
