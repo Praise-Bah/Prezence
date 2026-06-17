@@ -2,7 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { NotificationModule } from '../notification/notification.module';
+import { NotificationModule } from '../notification';
 import { RedisModule } from '../redis';
 import { IntelligenceController } from './intelligence.controller';
 import { IntelligenceService } from './intelligence.service';
