@@ -48,7 +48,7 @@ export class EmbeddingService {
         content,
         vectorLiteral,
         JSON.stringify(metadata),
-        'embedding',
+        AI_MODELS.embedding,
         tokenCount,
       ],
     );
