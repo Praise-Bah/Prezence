@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import { QUEUE_NAMES } from '@prezence/config';
-import { UsersService } from '../../auth/users.service';
+import { UsersService } from '../../auth';
 import { renderTemplate } from '../email-templates';
 import type { EmailJobData } from '../notification.service';
 

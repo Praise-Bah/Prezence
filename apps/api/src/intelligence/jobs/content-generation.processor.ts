@@ -18,7 +18,7 @@ import type {
 import { InterviewResponse } from '../entities/interview-response.entity';
 import { MarketScore } from '../entities/market-score.entity';
 import { ProfileData } from '../entities/profile-data.entity';
-import { NotificationService } from '../../notification/notification.service';
+import { NotificationService } from '../../notification';
 import { EmbeddingService } from '../services/embedding.service';
 import { ModelRouterService } from '../services/model-router.service';
 import { PromptRegistryService } from '../services/prompt-registry.service';
@@ -60,7 +60,13 @@ export class ContentGenerationProcessor extends WorkerHost {
     try {
       await this.run(job.data);
     } catch (err) {
-      await this.notificationService.sendContentFailed(userId, platform);
+      try {
+        await this.notificationService.sendContentFailed(userId, platform);
+      } catch (notifyErr) {
+        this.logger.warn(
+          `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,
+        );
+      }
       throw err;
     }
   }

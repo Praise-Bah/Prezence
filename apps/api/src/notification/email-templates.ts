@@ -10,9 +10,18 @@ export interface EmailPayload {
   html: string;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function s(val: unknown, fallback = ''): string {
   if (val == null) return fallback;
-  if (typeof val === 'string') return val;
+  if (typeof val === 'string') return escapeHtml(val);
   if (typeof val === 'number' || typeof val === 'boolean') return String(val);
   return fallback;
 }

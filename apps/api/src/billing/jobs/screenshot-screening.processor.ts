@@ -8,7 +8,7 @@ import type { SubscriptionPlan } from '@prezence/types';
 import { SubscriptionRequest } from '../entities/subscription-request.entity';
 import { ScreenshotScreenerService } from '../screenshot-screener.service';
 import { UsersService } from '../../auth/users.service';
-import { NotificationService } from '../../notification/notification.service';
+import { NotificationService } from '../../notification';
 
 export interface ScreeningJobData {
   requestId: string;
