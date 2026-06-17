@@ -8,6 +8,7 @@ import type { SubscriptionPlan } from '@prezence/types';
 import { SubscriptionRequest } from '../entities/subscription-request.entity';
 import { ScreenshotScreenerService } from '../screenshot-screener.service';
 import { UsersService } from '../../auth/users.service';
+import { NotificationService } from '../../notification/notification.service';
 
 export interface ScreeningJobData {
   requestId: string;
@@ -27,6 +28,7 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
     private readonly requestRepo: Repository<SubscriptionRequest>,
     private readonly screener: ScreenshotScreenerService,
     private readonly usersService: UsersService,
+    private readonly notificationService: NotificationService,
   ) {
     super();
   }
@@ -55,17 +57,23 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
     if (result.score >= SCREENING.confidence.HIGH) {
       newStatus = 'provisional';
       await this.usersService.updatePlan(userId, plan);
+      await this.notificationService.sendPaymentApproved(userId, plan);
       this.logger.log(
         `Auto-approved request ${requestId} — upgrading user ${userId} to ${plan}`,
       );
     } else if (result.score >= SCREENING.confidence.MEDIUM) {
       newStatus = 'provisional';
       await this.usersService.updatePlan(userId, plan);
+      await this.notificationService.sendPaymentApproved(userId, plan);
       this.logger.log(
         `Provisional grant for request ${requestId} — flagged for admin review`,
       );
     } else {
       newStatus = 'rejected';
+      await this.notificationService.sendPaymentRejected(
+        userId,
+        result.rejection_reason ?? 'Screenshot could not be verified',
+      );
       this.logger.warn(`Request ${requestId} rejected — score ${result.score}`);
     }
 
