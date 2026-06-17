@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IntegrationModule } from '../integration';
-import { RedisModule } from '../redis/redis.module';
+import { RedisModule } from '../redis';
 import { GithubChecker } from './checkers/github.checker';
 import { PlatformConnection } from '../integration';
 import { PlatformHealthCheck } from './entities/platform-health-check.entity';

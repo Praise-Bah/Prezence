@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { REDIS_CLIENT } from '../redis';
 import { PlatformConnection } from '../integration';
 import { TokenVaultService } from '../integration';
 import { GithubChecker } from './checkers/github.checker';
@@ -171,7 +171,7 @@ describe('PlatformHealthService', () => {
         addOrderBy: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([check]),
       };
-      (healthRepo.createQueryBuilder as jest.Mock).mockReturnValue(qb);
+      healthRepo.createQueryBuilder.mockReturnValue(qb);
 
       const result = await service.getLatest('user-1');
       expect(result[0].platform).toBe('github');

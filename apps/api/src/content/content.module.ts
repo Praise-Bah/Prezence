@@ -2,8 +2,10 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
-import { RedisModule } from '../redis/redis.module';
+import { InterviewResponse } from '../intelligence/entities/interview-response.entity';
+import { MarketScore } from '../intelligence/entities/market-score.entity';
+import { ProfileData } from '../intelligence/entities/profile-data.entity';
+import { RedisModule } from '../redis';
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
 

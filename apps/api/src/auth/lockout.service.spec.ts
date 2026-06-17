@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LockoutService } from './lockout.service';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { REDIS_CLIENT } from '../redis';
 
 describe('LockoutService', () => {
   let service: LockoutService;
