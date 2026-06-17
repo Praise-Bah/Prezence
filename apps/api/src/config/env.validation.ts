@@ -45,6 +45,12 @@ class EnvironmentVariables {
   FOUNDER_ORANGE_NUMBER!: string;
 
   @IsOptional()
+  RESEND_API_KEY?: string;
+
+  @IsOptional()
+  NOTIFICATIONS_FROM_EMAIL?: string;
+
+  @IsOptional()
   @IsIn(['development', 'test', 'production'])
   NODE_ENV?: string;
 
