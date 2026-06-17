@@ -93,16 +93,8 @@ export class ContentGenerationProcessor extends WorkerHost {
       .map(([k, v]) => `${k}: ${String(v)}`)
       .join('\n');
 
-    // 2. Store embedding for this interview (for future RAG retrieval)
-    await this.embeddingService.generateAndStore(
-      userId,
-      'interview_response',
-      interviewResponseId,
-      answersText,
-      { platform, interviewVersion },
-    );
-
-    // 3. Retrieve similar embeddings for RAG context
+    // 2. Retrieve similar embeddings before storing the current interview to
+    // avoid contaminating its own RAG context.
     const similar = await this.embeddingService.findSimilar(
       userId,
       answersText,
@@ -118,7 +110,7 @@ export class ContentGenerationProcessor extends WorkerHost {
             .join('\n\n')
         : 'No similar profiles found yet.';
 
-    // 4. Load generation prompt
+    // 3. Load generation prompt
     const genPrompt = await this.promptRegistry.getActive('generate_profile');
     const charLimits = JSON.stringify(
       PLATFORM_CHAR_LIMITS[platform] ?? {},
@@ -133,7 +125,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       language: userLanguage,
     });
 
-    // 5. Generate content (Claude Sonnet)
+    // 4. Generate content (Claude Sonnet)
     const { content: rawGenerated } = await this.modelRouter.generate(
       AI_MODELS.generation,
       [{ role: 'user', content: renderedPrompt }],
@@ -150,7 +142,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       throw new Error('Content generation returned invalid JSON');
     }
 
-    // 6. QA pass (Gemini Flash)
+    // 5. QA pass (Gemini Flash)
     const qaPromptTemplate = await this.promptRegistry.getActive('qa_profile');
     const renderedQaPrompt = this.promptRegistry.render(
       qaPromptTemplate.template,
@@ -180,7 +172,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       };
     }
 
-    // 7. Upsert profile_data
+    // 6. Upsert profile_data
     const existing = await this.profileRepo.findOne({
       where: { userId, platform, interviewVersion },
     });
@@ -204,7 +196,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       );
     }
 
-    // 8. Compute and store market score
+    // 7. Compute and store market score
     const completeness = this.computeCompleteness(generated.sections);
     const keywordDensity = Math.min(
       100,
@@ -216,18 +208,31 @@ export class ContentGenerationProcessor extends WorkerHost {
       (completeness + keywordDensity + marketDemand + recency) / 4,
     );
 
-    await this.marketScoreRepo.save(
-      this.marketScoreRepo.create({
+    const marketScoreData = {
+      score: overallScore,
+      completeness,
+      keywordDensity,
+      marketDemand,
+      recency,
+      recommendations: qa.suggestions ?? [],
+      computedAt: new Date(),
+    };
+    await this.marketScoreRepo.upsert(
+      {
         userId,
         platform,
-        score: overallScore,
-        completeness,
-        keywordDensity,
-        marketDemand,
-        recency,
-        recommendations: qa.suggestions ?? [],
-        computedAt: new Date(),
-      }),
+        ...marketScoreData,
+      },
+      ['userId', 'platform'],
+    );
+
+    // 8. Store embedding last so failed retries cannot self-contaminate RAG.
+    await this.embeddingService.generateAndStore(
+      userId,
+      'interview_response',
+      interviewResponseId,
+      answersText,
+      { platform, interviewVersion },
     );
 
     // 9. Cache result with versioned key
