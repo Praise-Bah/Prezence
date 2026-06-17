@@ -5,13 +5,15 @@ import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
-import { BillingModule } from './billing/billing.module';
-import { ContentModule } from './content/content.module';
+import { BillingModule } from './billing';
+import { ContentModule } from './content';
 import { IntelligenceModule } from './intelligence';
+import { IntegrationModule } from './integration';
 import { NotificationModule } from './notification';
+import { PlatformHealthModule } from './platform-health';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './redis';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { RedisModule } from './redis/redis.module';
     BillingModule,
     IntelligenceModule,
     ContentModule,
+    IntegrationModule,
+    PlatformHealthModule,
     NotificationModule,
   ],
   controllers: [AppController],

@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
-import { RedisModule } from '../redis/redis.module';
+import { RedisModule } from '../redis';
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
 

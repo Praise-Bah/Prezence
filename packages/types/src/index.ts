@@ -66,7 +66,17 @@ export type SupportedPlatform =
 
 export type IntegrationLayer = 'L1' | 'L2' | 'L3A' | 'L3B';
 
+export type ConnectionStatus = 'active' | 'expired' | 'revoked' | 'error';
+
 export type JobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'retrying';
+
+export interface PlatformPublishJobData {
+  userId: string;
+  platform: SupportedPlatform;
+  automationJobId: string;
+  layer: IntegrationLayer;
+  contentSections: Record<string, string>;
+}
 
 export interface AutomationJob {
   id: string;
