@@ -133,6 +133,7 @@ describe('ContentService', () => {
       expect(linkedin?.hasContent).toBe(true);
       expect(linkedin?.qualityScore).toBe(85);
       expect(linkedin?.marketScore).toBe(78);
+      expect(redis.mget).toHaveBeenCalledWith('gen:user-uuid:linkedin:v1');
 
       const github = result.find((r) => r.platform === 'github');
       expect(github?.hasContent).toBe(false);

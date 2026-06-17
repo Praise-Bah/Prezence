@@ -92,16 +92,8 @@ export class ContentGenerationProcessor extends WorkerHost {
       .map(([k, v]) => `${k}: ${String(v)}`)
       .join('\n');
 
-    // 2. Store embedding for this interview (for future RAG retrieval)
-    await this.embeddingService.generateAndStore(
-      userId,
-      'interview_response',
-      interviewResponseId,
-      answersText,
-      { platform, interviewVersion },
-    );
-
-    // 3. Retrieve similar embeddings for RAG context
+    // 2. Retrieve similar embeddings for RAG context (before storing current —
+    //    avoids the current interview contaminating its own RAG context)
     const similar = await this.embeddingService.findSimilar(
       userId,
       answersText,
@@ -116,6 +108,15 @@ export class ContentGenerationProcessor extends WorkerHost {
             )
             .join('\n\n')
         : 'No similar profiles found yet.';
+
+    // 3. Store embedding for this interview now that RAG lookup is done
+    await this.embeddingService.generateAndStore(
+      userId,
+      'interview_response',
+      interviewResponseId,
+      answersText,
+      { platform, interviewVersion },
+    );
 
     // 4. Load generation prompt
     const genPrompt = await this.promptRegistry.getActive('generate_profile');
@@ -179,29 +180,18 @@ export class ContentGenerationProcessor extends WorkerHost {
       };
     }
 
-    // 7. Upsert profile_data
-    const existing = await this.profileRepo.findOne({
-      where: { userId, platform, interviewVersion },
-    });
-
-    if (existing) {
-      await this.profileRepo.update(existing.id, {
+    // 7. Upsert profile_data atomically by user/platform/version.
+    await this.profileRepo.upsert(
+      {
+        userId,
+        platform,
+        interviewVersion,
         content: { ...generated.sections },
         qualityScore: qa.quality_score,
         generatedAt: new Date(),
-      });
-    } else {
-      await this.profileRepo.save(
-        this.profileRepo.create({
-          userId,
-          platform,
-          interviewVersion,
-          content: { ...generated.sections },
-          qualityScore: qa.quality_score,
-          generatedAt: new Date(),
-        }),
-      );
-    }
+      },
+      ['userId', 'platform', 'interviewVersion'],
+    );
 
     // 8. Compute and store market score
     const completeness = this.computeCompleteness(generated.sections);
@@ -215,8 +205,8 @@ export class ContentGenerationProcessor extends WorkerHost {
       (completeness + keywordDensity + marketDemand + recency) / 4,
     );
 
-    await this.marketScoreRepo.save(
-      this.marketScoreRepo.create({
+    await this.marketScoreRepo.upsert(
+      {
         userId,
         platform,
         score: overallScore,
@@ -226,7 +216,8 @@ export class ContentGenerationProcessor extends WorkerHost {
         recency,
         recommendations: qa.suggestions ?? [],
         computedAt: new Date(),
-      }),
+      },
+      ['userId', 'platform'],
     );
 
     // 9. Cache result with versioned key

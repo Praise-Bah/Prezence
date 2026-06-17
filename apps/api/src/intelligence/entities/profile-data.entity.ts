@@ -2,11 +2,19 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import type { SupportedPlatform } from '@prezence/types';
 
+@Index(
+  'profile_data_user_platform_version_unique_idx',
+  ['userId', 'platform', 'interviewVersion'],
+  {
+    unique: true,
+  },
+)
 @Entity({ schema: 'public', name: 'profile_data' })
 export class ProfileData {
   @PrimaryGeneratedColumn('uuid')
