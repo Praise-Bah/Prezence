@@ -7,6 +7,14 @@ const LOCKOUT_TTL_SECONDS = 15 * 60;
 
 @Injectable()
 export class LockoutService {
+  private static readonly INCR_WITH_TTL_SCRIPT = `
+    local count = redis.call('INCR', KEYS[1])
+    if count == 1 then
+      redis.call('EXPIRE', KEYS[1], ARGV[1])
+    end
+    return count
+  `;
+
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   private failsKey(email: string): string {
@@ -23,15 +31,8 @@ export class LockoutService {
   }
 
   async recordFailure(email: string): Promise<void> {
-    const luaScript = `
-      local count = redis.call('INCR', KEYS[1])
-      if count == 1 then
-        redis.call('EXPIRE', KEYS[1], ARGV[1])
-      end
-      return count
-    `;
     const fails = (await this.redis.eval(
-      luaScript,
+      LockoutService.INCR_WITH_TTL_SCRIPT,
       1,
       this.failsKey(email),
       LOCKOUT_TTL_SECONDS,

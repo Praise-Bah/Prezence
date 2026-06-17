@@ -4,6 +4,14 @@ import { REDIS_CLIENT } from '../redis/redis.constants';
 
 @Injectable()
 export class RateLimitService {
+  private static readonly INCR_WITH_TTL_SCRIPT = `
+    local count = redis.call('INCR', KEYS[1])
+    if count == 1 then
+      redis.call('EXPIRE', KEYS[1], ARGV[1])
+    end
+    return count
+  `;
+
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   /**
@@ -15,15 +23,8 @@ export class RateLimitService {
     limit: number,
     ttlSeconds: number,
   ): Promise<boolean> {
-    const luaScript = `
-      local count = redis.call('INCR', KEYS[1])
-      if count == 1 then
-        redis.call('EXPIRE', KEYS[1], ARGV[1])
-      end
-      return count
-    `;
     const count = (await this.redis.eval(
-      luaScript,
+      RateLimitService.INCR_WITH_TTL_SCRIPT,
       1,
       key,
       ttlSeconds,
