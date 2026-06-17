@@ -9,9 +9,7 @@ import type {
   ContentGenerationJobData,
   SupportedPlatform,
 } from '@prezence/types';
-import { InterviewResponse } from '../intelligence/entities/interview-response.entity';
-import { MarketScore } from '../intelligence/entities/market-score.entity';
-import { ProfileData } from '../intelligence/entities/profile-data.entity';
+import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { REDIS_CLIENT } from '../redis/redis.constants';
 
 export interface PlatformSummary {
