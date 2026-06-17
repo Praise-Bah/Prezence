@@ -18,6 +18,7 @@ import type {
 import { InterviewResponse } from '../entities/interview-response.entity';
 import { MarketScore } from '../entities/market-score.entity';
 import { ProfileData } from '../entities/profile-data.entity';
+import { NotificationService } from '../../notification';
 import { EmbeddingService } from '../services/embedding.service';
 import { ModelRouterService } from '../services/model-router.service';
 import { PromptRegistryService } from '../services/prompt-registry.service';
@@ -43,6 +44,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     private readonly modelRouter: ModelRouterService,
     private readonly promptRegistry: PromptRegistryService,
     private readonly embeddingService: EmbeddingService,
+    private readonly notificationService: NotificationService,
     @Inject('REDIS_CLIENT')
     private readonly redis: Redis,
   ) {
@@ -50,17 +52,33 @@ export class ContentGenerationProcessor extends WorkerHost {
   }
 
   async process(job: Job<ContentGenerationJobData>): Promise<void> {
+    const { userId, platform } = job.data;
+    this.logger.log(
+      `Processing generation job ${job.id} — ${platform} for user ${userId}`,
+    );
+
+    try {
+      await this.run(job.data);
+    } catch (err) {
+      try {
+        await this.notificationService.sendContentFailed(userId, platform);
+      } catch (notifyErr) {
+        this.logger.warn(
+          `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,
+        );
+      }
+      throw err;
+    }
+  }
+
+  private async run(data: ContentGenerationJobData): Promise<void> {
     const {
       userId,
       platform,
       interviewResponseId,
       interviewVersion,
       userLanguage,
-    } = job.data;
-
-    this.logger.log(
-      `Processing generation job ${job.id} — ${platform} for user ${userId}`,
-    );
+    } = data;
 
     // 1. Load interview answers
     const interview = await this.interviewRepo.findOne({
@@ -74,16 +92,8 @@ export class ContentGenerationProcessor extends WorkerHost {
       .map(([k, v]) => `${k}: ${String(v)}`)
       .join('\n');
 
-    // 2. Store embedding for this interview (for future RAG retrieval)
-    await this.embeddingService.generateAndStore(
-      userId,
-      'interview_response',
-      interviewResponseId,
-      answersText,
-      { platform, interviewVersion },
-    );
-
-    // 3. Retrieve similar embeddings for RAG context
+    // 2. Retrieve similar embeddings for RAG context (before storing current —
+    //    avoids the current interview contaminating its own RAG context)
     const similar = await this.embeddingService.findSimilar(
       userId,
       answersText,
@@ -98,6 +108,15 @@ export class ContentGenerationProcessor extends WorkerHost {
             )
             .join('\n\n')
         : 'No similar profiles found yet.';
+
+    // 3. Store embedding for this interview now that RAG lookup is done
+    await this.embeddingService.generateAndStore(
+      userId,
+      'interview_response',
+      interviewResponseId,
+      answersText,
+      { platform, interviewVersion },
+    );
 
     // 4. Load generation prompt
     const genPrompt = await this.promptRegistry.getActive('generate_profile');
@@ -127,9 +146,7 @@ export class ContentGenerationProcessor extends WorkerHost {
         stripCodeFences(rawGenerated),
       ) as GeneratedSections;
     } catch {
-      this.logger.error(
-        `Generation JSON parse failed for job ${job.id}: ${rawGenerated}`,
-      );
+      this.logger.error(`Generation JSON parse failed: ${rawGenerated}`);
       throw new Error('Content generation returned invalid JSON');
     }
 
@@ -154,9 +171,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     try {
       qa = JSON.parse(stripCodeFences(rawQa)) as QaResult;
     } catch {
-      this.logger.warn(
-        `QA JSON parse failed for job ${job.id} — defaulting score to 50`,
-      );
+      this.logger.warn(`QA JSON parse failed — defaulting score to 50`);
       qa = {
         quality_score: 50,
         passes_constraints: true,
@@ -165,29 +180,18 @@ export class ContentGenerationProcessor extends WorkerHost {
       };
     }
 
-    // 7. Upsert profile_data
-    const existing = await this.profileRepo.findOne({
-      where: { userId, platform, interviewVersion },
-    });
-
-    if (existing) {
-      await this.profileRepo.update(existing.id, {
+    // 7. Upsert profile_data atomically by user/platform/version.
+    await this.profileRepo.upsert(
+      {
+        userId,
+        platform,
+        interviewVersion,
         content: { ...generated.sections },
         qualityScore: qa.quality_score,
         generatedAt: new Date(),
-      });
-    } else {
-      await this.profileRepo.save(
-        this.profileRepo.create({
-          userId,
-          platform,
-          interviewVersion,
-          content: { ...generated.sections },
-          qualityScore: qa.quality_score,
-          generatedAt: new Date(),
-        }),
-      );
-    }
+      },
+      ['userId', 'platform', 'interviewVersion'],
+    );
 
     // 8. Compute and store market score
     const completeness = this.computeCompleteness(generated.sections);
@@ -201,8 +205,8 @@ export class ContentGenerationProcessor extends WorkerHost {
       (completeness + keywordDensity + marketDemand + recency) / 4,
     );
 
-    await this.marketScoreRepo.save(
-      this.marketScoreRepo.create({
+    await this.marketScoreRepo.upsert(
+      {
         userId,
         platform,
         score: overallScore,
@@ -212,7 +216,8 @@ export class ContentGenerationProcessor extends WorkerHost {
         recency,
         recommendations: qa.suggestions ?? [],
         computedAt: new Date(),
-      }),
+      },
+      ['userId', 'platform'],
     );
 
     // 9. Cache result with versioned key
@@ -224,8 +229,20 @@ export class ContentGenerationProcessor extends WorkerHost {
       CACHE_TTL.generated_profile,
     );
 
+    try {
+      await this.notificationService.sendContentReady(
+        userId,
+        platform,
+        qa.quality_score,
+      );
+    } catch (notifyErr) {
+      this.logger.warn(
+        `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,
+      );
+    }
+
     this.logger.log(
-      `Generation complete for job ${job.id} — quality: ${String(qa.quality_score)}, market: ${String(overallScore)}`,
+      `Generation complete for job — quality: ${String(qa.quality_score)}, market: ${String(overallScore)}`,
     );
   }
 

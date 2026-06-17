@@ -4,12 +4,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing/billing.module';
-import { IntelligenceModule } from './intelligence/intelligence.module';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { RateLimitGuard } from './auth/guards/rate-limit.guard';
-import { RolesGuard } from './auth/guards/roles.guard';
+import { ContentModule } from './content/content.module';
+import { IntelligenceModule } from './intelligence';
+import { NotificationModule } from './notification/notification.module';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
@@ -29,6 +28,8 @@ import { RedisModule } from './redis/redis.module';
     AuthModule,
     BillingModule,
     IntelligenceModule,
+    ContentModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
