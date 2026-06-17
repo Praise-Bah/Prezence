@@ -10,6 +10,7 @@ import { ContentModule } from './content/content.module';
 import { IntelligenceModule } from './intelligence';
 import { IntegrationModule } from './integration';
 import { NotificationModule } from './notification';
+import { PlatformHealthModule } from './platform-health';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
@@ -31,6 +32,7 @@ import { RedisModule } from './redis/redis.module';
     IntelligenceModule,
     ContentModule,
     IntegrationModule,
+    PlatformHealthModule,
     NotificationModule,
   ],
   controllers: [AppController],
