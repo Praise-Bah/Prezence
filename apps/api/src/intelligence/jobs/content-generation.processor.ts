@@ -238,11 +238,17 @@ export class ContentGenerationProcessor extends WorkerHost {
       CACHE_TTL.generated_profile,
     );
 
-    await this.notificationService.sendContentReady(
-      userId,
-      platform,
-      qa.quality_score,
-    );
+    try {
+      await this.notificationService.sendContentReady(
+        userId,
+        platform,
+        qa.quality_score,
+      );
+    } catch (notifyErr) {
+      this.logger.warn(
+        `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,
+      );
+    }
 
     this.logger.log(
       `Generation complete for job — quality: ${String(qa.quality_score)}, market: ${String(overallScore)}`,
