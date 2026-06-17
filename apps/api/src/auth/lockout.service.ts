@@ -23,11 +23,19 @@ export class LockoutService {
   }
 
   async recordFailure(email: string): Promise<void> {
-    const fails = await this.redis.incr(this.failsKey(email));
-
-    if (fails === 1) {
-      await this.redis.expire(this.failsKey(email), LOCKOUT_TTL_SECONDS);
-    }
+    const luaScript = `
+      local count = redis.call('INCR', KEYS[1])
+      if count == 1 then
+        redis.call('EXPIRE', KEYS[1], ARGV[1])
+      end
+      return count
+    `;
+    const fails = (await this.redis.eval(
+      luaScript,
+      1,
+      this.failsKey(email),
+      LOCKOUT_TTL_SECONDS,
+    )) as number;
 
     if (fails >= MAX_FAILED_ATTEMPTS) {
       await this.redis.set(
