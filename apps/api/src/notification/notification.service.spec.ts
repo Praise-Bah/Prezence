@@ -51,6 +51,18 @@ describe('NotificationService', () => {
     );
   });
 
+  it('enqueues payment_provisional', async () => {
+    await service.sendPaymentProvisional('user-1', 'pro');
+    expect(mockQueue.add).toHaveBeenCalledWith(
+      'send',
+      expect.objectContaining({
+        type: 'payment_provisional',
+        data: { plan: 'pro' },
+      }),
+      expect.anything(),
+    );
+  });
+
   it('enqueues payment_rejected', async () => {
     await service.sendPaymentRejected('user-1', 'Low confidence');
     expect(mockQueue.add).toHaveBeenCalledWith(
