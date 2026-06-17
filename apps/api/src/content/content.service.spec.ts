@@ -4,9 +4,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { InterviewResponse } from '../intelligence/entities/interview-response.entity';
-import { MarketScore } from '../intelligence/entities/market-score.entity';
-import { ProfileData } from '../intelligence/entities/profile-data.entity';
+import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { ContentService } from './content.service';
 
 const mockProfile = (platform = 'linkedin'): ProfileData =>
@@ -50,14 +48,14 @@ describe('ContentService', () => {
   let profileRepo: jest.Mocked<Repository<ProfileData>>;
   let marketScoreRepo: jest.Mocked<Repository<MarketScore>>;
   let interviewRepo: jest.Mocked<Repository<InterviewResponse>>;
-  let redis: { get: jest.Mock; del: jest.Mock; exists: jest.Mock };
+  let redis: { get: jest.Mock; del: jest.Mock; mget: jest.Mock };
   let queue: { add: jest.Mock };
 
   beforeEach(async () => {
     redis = {
       get: jest.fn().mockResolvedValue(null),
       del: jest.fn().mockResolvedValue(1),
-      exists: jest.fn().mockResolvedValue(0),
+      mget: jest.fn().mockResolvedValue([null]),
     };
     queue = { add: jest.fn().mockResolvedValue({ id: 'job-uuid' }) };
 

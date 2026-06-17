@@ -1,3 +1,6 @@
 export { IntelligenceModule } from './intelligence.module';
 export { IntelligenceService } from './intelligence.service';
 export { ModelRouterService } from './services/model-router.service';
+export { InterviewResponse } from './entities/interview-response.entity';
+export { MarketScore } from './entities/market-score.entity';
+export { ProfileData } from './entities/profile-data.entity';
