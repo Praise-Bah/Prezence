@@ -6,5 +6,5 @@
 
 alter table public.users drop constraint if exists users_id_fkey;
 alter table public.users alter column id set default gen_random_uuid();
-alter table public.users add column password_hash text not null default '';
+alter table public.users add column password_hash text not null default '$2b$12$elRPZMGljaonecYrXuyOuemKyPzSjoGz3jzn8wog1ixQOoSuBRl0G';
 alter table public.users alter column password_hash drop default;
