@@ -9,9 +9,7 @@ import type {
   ContentGenerationJobData,
   SupportedPlatform,
 } from '@prezence/types';
-import { InterviewResponse } from '../intelligence/entities/interview-response.entity';
-import { MarketScore } from '../intelligence/entities/market-score.entity';
-import { ProfileData } from '../intelligence/entities/profile-data.entity';
+import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 
 export interface PlatformSummary {
   platform: SupportedPlatform;
@@ -102,27 +100,41 @@ export class ContentService {
       'twitter',
     ];
 
-    return Promise.all(
-      platforms.map(async (platform) => {
-        const profile = profileMap.get(platform) ?? null;
-        const score = scoreMap.get(platform) ?? null;
-        let cached = false;
+    const cacheKeys = platforms.map((platform) => {
+      const profile = profileMap.get(platform);
+      return profile
+        ? `gen:${userId}:${platform}:v${String(profile.interviewVersion)}`
+        : null;
+    });
 
-        if (profile) {
-          const cacheKey = `gen:${userId}:${platform}:v${String(profile.interviewVersion)}`;
-          cached = (await this.redis.exists(cacheKey)) === 1;
-        }
+    const nonNullKeys = cacheKeys.filter((k): k is string => k !== null);
+    const mgetResults =
+      nonNullKeys.length > 0 ? await this.redis.mget(...nonNullKeys) : [];
 
-        return {
-          platform,
-          hasContent: profile !== null,
-          qualityScore: profile?.qualityScore ?? null,
-          marketScore: score?.score ?? null,
-          generatedAt: profile?.generatedAt ?? null,
-          cached,
-        };
-      }),
-    );
+    const cacheHitMap = new Map<string, boolean>();
+    let mgetIdx = 0;
+    for (const key of cacheKeys) {
+      if (key !== null) {
+        cacheHitMap.set(key, mgetResults[mgetIdx] !== null);
+        mgetIdx++;
+      }
+    }
+
+    return platforms.map((platform, i) => {
+      const profile = profileMap.get(platform) ?? null;
+      const score = scoreMap.get(platform) ?? null;
+      const key = cacheKeys[i];
+      const cached = key !== null && (cacheHitMap.get(key) ?? false);
+
+      return {
+        platform,
+        hasContent: profile !== null,
+        qualityScore: profile?.qualityScore ?? null,
+        marketScore: score?.score ?? null,
+        generatedAt: profile?.generatedAt ?? null,
+        cached,
+      };
+    });
   }
 
   async regenerate(
