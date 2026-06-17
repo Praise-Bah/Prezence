@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsOptional,
+  IsString,
   Matches,
   validateSync,
 } from 'class-validator';
@@ -57,6 +58,25 @@ class EnvironmentVariables {
 
   @IsOptional()
   NOTIFICATIONS_FROM_EMAIL?: string;
+
+  @IsNotEmpty()
+  @Matches(/^[0-9a-fA-F]{64}$/, {
+    message:
+      'ENCRYPTION_KEY must be a 64-character hex string (32 bytes for AES-256-GCM)',
+  })
+  ENCRYPTION_KEY!: string;
+
+  @IsOptional()
+  @IsString()
+  SMARTPROXY_HOST?: string;
+
+  @IsOptional()
+  @IsString()
+  SMARTPROXY_USERNAME?: string;
+
+  @IsOptional()
+  @IsString()
+  SMARTPROXY_PASSWORD?: string;
 
   @IsOptional()
   @IsIn(['development', 'test', 'production'])
