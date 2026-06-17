@@ -48,14 +48,26 @@
   QA pass → profile_data + market_scores upsert → Redis versioned cache; IVFFlat →
   HNSW index fix (Greptile comment from PR #4); interview_responses table; seeded
   prompt templates; 41 unit tests total; CI green
+- ContentModule merged: platform-specific content delivery, getContent cache read,
+  re-generation triggers via BullMQ; barrel exports; CI green
+- IntegrationModule merged (PR #28): AES-256-GCM token vault, platform connections,
+  L1 GitHub REST publisher, L3A Playwright stub, BullMQ automation jobs, proxy config;
+  module boundary fixes (Greptile P5); CI green; ENCRYPTION_KEY added to Doppler
+- NotificationModule merged: in-app + email notification service, BullMQ job processor,
+  email templates; wired into IntegrationModule; CI green
+- PlatformHealthModule merged (PR #31): token validity checks (GitHub L1, L3A healthy stub),
+  Redis 10-min cache, DISTINCT ON latest-per-platform query, auto-expire on token_expired;
+  migration 20260617110001 applied to Supabase; CI green
+- All barrel import violations fixed across all modules (redis, intelligence entities,
+  notification, content, billing barrels); PlatformConnection forFeature DI crash fixed;
+  main branch up to date (PR #33 merged 2026-06-17)
 
 ## 🔄 In Progress
-- develop → staging promotion (auto-PR created, awaiting CI + manual merge)
+- AIModule — remaining module from CLAUDE.md module list
 
 ## 📋 Up Next
-1. Merge develop → staging → main (same flow as previous modules)
-2. ContentModule — platform-specific content delivery, cache read endpoints, re-generation triggers
-3. IntegrationModule — L3A Playwright workers (BullMQ, Smartproxy), platform publishing
+1. AIModule — OpenRouter model routing abstraction, prompt versioning, usage tracking,
+   model selection strategy (Claude Sonnet for generation, Gemini Flash for QA)
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at `~/.mcp-servers/{supabase,github}` (npx hits a Node 22 ESM resolution bug for `@supabase/mcp-server-supabase` on Windows). Each developer must run, once:
