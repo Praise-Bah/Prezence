@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { ContentService } from '../content/content.service';
+import { ContentService } from '../content';
 import { AutomationJobEntity } from './entities/automation-job.entity';
 import { PlatformConnection } from './entities/platform-connection.entity';
 import { TokenVaultService } from './services/token-vault.service';
