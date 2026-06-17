@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { AI_MODELS } from '@prezence/config';
-import { ModelRouterService } from './model-router.service';
+import { AiUsageService } from '../../ai';
 
 export interface SimilarEmbedding {
   id: string;
@@ -19,7 +18,7 @@ export class EmbeddingService {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly modelRouter: ModelRouterService,
+    private readonly aiUsage: AiUsageService,
   ) {}
 
   async generateAndStore(
@@ -29,10 +28,11 @@ export class EmbeddingService {
     content: string,
     metadata: Record<string, unknown> = {},
   ): Promise<void> {
-    const { embedding, tokenCount } = await this.modelRouter.embed(
-      content,
-      AI_MODELS.embedding,
-    );
+    const { embedding, tokenCount } = await this.aiUsage.embed({
+      userId,
+      feature: 'rag_embedding',
+      text: content,
+    });
 
     const vectorLiteral = `[${embedding.join(',')}]`;
 
@@ -48,7 +48,7 @@ export class EmbeddingService {
         content,
         vectorLiteral,
         JSON.stringify(metadata),
-        AI_MODELS.embedding,
+        'embedding',
         tokenCount,
       ],
     );
@@ -63,10 +63,11 @@ export class EmbeddingService {
     text: string,
     limit = 5,
   ): Promise<SimilarEmbedding[]> {
-    const { embedding } = await this.modelRouter.embed(
+    const { embedding } = await this.aiUsage.embed({
+      userId,
+      feature: 'rag_retrieval',
       text,
-      AI_MODELS.embedding,
-    );
+    });
     const vectorLiteral = `[${embedding.join(',')}]`;
 
     const rows: SimilarEmbedding[] = await this.dataSource.query(

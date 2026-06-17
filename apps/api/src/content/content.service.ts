@@ -9,8 +9,9 @@ import type {
   ContentGenerationJobData,
   SupportedPlatform,
 } from '@prezence/types';
-import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { InterviewResponse } from '../intelligence/entities/interview-response.entity';
+import { MarketScore } from '../intelligence/entities/market-score.entity';
+import { ProfileData } from '../intelligence/entities/profile-data.entity';
 
 export interface PlatformSummary {
   platform: SupportedPlatform;
@@ -34,7 +35,7 @@ export class ContentService {
     private readonly interviewRepo: Repository<InterviewResponse>,
     @InjectQueue(QUEUE_NAMES.content_generation)
     private readonly generationQueue: Queue<ContentGenerationJobData>,
-    @Inject(REDIS_CLIENT)
+    @Inject('REDIS_CLIENT')
     private readonly redis: Redis,
   ) {}
 

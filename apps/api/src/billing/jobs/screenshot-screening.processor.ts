@@ -71,10 +71,10 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
       newStatus = 'provisional';
       await this.usersService.updatePlan(userId, plan);
       try {
-        await this.notificationService.sendPaymentProvisional(userId, plan);
+        await this.notificationService.sendPaymentApproved(userId, plan);
       } catch (notifyErr) {
         this.logger.warn(
-          `Failed to enqueue payment_provisional notification for user ${userId}: ${String(notifyErr)}`,
+          `Failed to enqueue payment_approved notification for user ${userId}: ${String(notifyErr)}`,
         );
       }
       this.logger.log(

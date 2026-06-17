@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AiModule } from './ai';
 import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing';
 import { ContentModule } from './content';
@@ -27,6 +28,7 @@ import { RedisModule } from './redis';
     }),
     DatabaseModule,
     RedisModule,
+    AiModule,
     AuthModule,
     BillingModule,
     IntelligenceModule,
