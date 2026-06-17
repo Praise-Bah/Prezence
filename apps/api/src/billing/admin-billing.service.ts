@@ -8,7 +8,7 @@ import { In, Repository } from 'typeorm';
 import { SubscriptionRequest } from './entities/subscription-request.entity';
 import { PaymentEvent } from './entities/payment-event.entity';
 import type { ReviewSubmissionDto } from './dto/review-submission.dto';
-import { UsersService } from '../auth/users.service';
+import { UsersService } from '../auth';
 
 @Injectable()
 export class AdminBillingService {
@@ -52,6 +52,7 @@ export class AdminBillingService {
         reviewedBy: reviewerId,
         reviewedAt: new Date(),
         rejectionReason: null,
+        adminNotes: dto.adminNotes ?? null,
       });
       await this.usersService.updatePlan(request.userId, request.plan);
       await this.eventRepo.save(
@@ -72,12 +73,18 @@ export class AdminBillingService {
       throw new BadRequestException('A rejection reason is required.');
     }
 
+    const revokeProvisionalAccess = request.status === 'provisional';
+
     await this.requestRepo.update(requestId, {
       status: 'rejected',
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
       rejectionReason: dto.adminNotes,
+      adminNotes: dto.adminNotes,
     });
+    if (revokeProvisionalAccess) {
+      await this.usersService.updatePlan(request.userId, 'free');
+    }
     await this.eventRepo.save(
       this.eventRepo.create({
         userId: request.userId,

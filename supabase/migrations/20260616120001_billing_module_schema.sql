@@ -11,7 +11,9 @@ alter table public.subscription_requests
   add column if not exists ai_confidence      integer,
   add column if not exists ai_confidence_level text,
   add column if not exists reviewed_by        uuid,
+  add column if not exists reviewed_at        timestamptz,
   add column if not exists rejection_reason   text,
+  add column if not exists admin_notes        text,
   add column if not exists provider_event_id  text unique,
   add column if not exists updated_at         timestamptz not null default now();
 

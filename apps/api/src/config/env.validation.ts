@@ -24,6 +24,9 @@ class EnvironmentVariables {
   OPENROUTER_API_KEY!: string;
 
   @IsNotEmpty()
+  SCREENSHOT_AI_MODEL!: string;
+
+  @IsNotEmpty()
   R2_ACCOUNT_ID!: string;
 
   @IsNotEmpty()
