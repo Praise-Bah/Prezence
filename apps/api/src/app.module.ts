@@ -8,7 +8,7 @@ import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing/billing.module';
 import { ContentModule } from './content/content.module';
 import { IntelligenceModule } from './intelligence';
-import { NotificationModule } from './notification/notification.module';
+import { NotificationModule } from './notification';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';

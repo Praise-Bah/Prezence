@@ -10,6 +10,7 @@ import type {
   SupportedPlatform,
 } from '@prezence/types';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
+import { REDIS_CLIENT } from '../redis/redis.constants';
 
 export interface PlatformSummary {
   platform: SupportedPlatform;
@@ -33,7 +34,7 @@ export class ContentService {
     private readonly interviewRepo: Repository<InterviewResponse>,
     @InjectQueue(QUEUE_NAMES.content_generation)
     private readonly generationQueue: Queue<ContentGenerationJobData>,
-    @Inject('REDIS_CLIENT')
+    @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
   ) {}
 
@@ -100,41 +101,27 @@ export class ContentService {
       'twitter',
     ];
 
-    const cacheKeys = platforms.map((platform) => {
-      const profile = profileMap.get(platform);
-      return profile
-        ? `gen:${userId}:${platform}:v${String(profile.interviewVersion)}`
-        : null;
-    });
+    return Promise.all(
+      platforms.map(async (platform) => {
+        const profile = profileMap.get(platform) ?? null;
+        const score = scoreMap.get(platform) ?? null;
+        let cached = false;
 
-    const nonNullKeys = cacheKeys.filter((k): k is string => k !== null);
-    const mgetResults =
-      nonNullKeys.length > 0 ? await this.redis.mget(...nonNullKeys) : [];
+        if (profile) {
+          const cacheKey = `gen:${userId}:${platform}:v${String(profile.interviewVersion)}`;
+          cached = (await this.redis.exists(cacheKey)) === 1;
+        }
 
-    const cacheHitMap = new Map<string, boolean>();
-    let mgetIdx = 0;
-    for (const key of cacheKeys) {
-      if (key !== null) {
-        cacheHitMap.set(key, mgetResults[mgetIdx] !== null);
-        mgetIdx++;
-      }
-    }
-
-    return platforms.map((platform, i) => {
-      const profile = profileMap.get(platform) ?? null;
-      const score = scoreMap.get(platform) ?? null;
-      const key = cacheKeys[i];
-      const cached = key !== null && (cacheHitMap.get(key) ?? false);
-
-      return {
-        platform,
-        hasContent: profile !== null,
-        qualityScore: profile?.qualityScore ?? null,
-        marketScore: score?.score ?? null,
-        generatedAt: profile?.generatedAt ?? null,
-        cached,
-      };
-    });
+        return {
+          platform,
+          hasContent: profile !== null,
+          qualityScore: profile?.qualityScore ?? null,
+          marketScore: score?.score ?? null,
+          generatedAt: profile?.generatedAt ?? null,
+          cached,
+        };
+      }),
+    );
   }
 
   async regenerate(
