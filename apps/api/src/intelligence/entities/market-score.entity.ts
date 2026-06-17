@@ -8,7 +8,7 @@ import {
 
 import type { SupportedPlatform } from '@prezence/types';
 
-@Index('market_scores_user_platform_unique_idx', ['userId', 'platform'], {
+@Index('market_scores_user_platform_unique', ['userId', 'platform'], {
   unique: true,
 })
 @Entity({ schema: 'public', name: 'market_scores' })
