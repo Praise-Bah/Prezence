@@ -1,3 +1,13 @@
+// ─── AI models ────────────────────────────────────────────────────────────────
+
+export const AI_MODELS = {
+  generation: 'anthropic/claude-sonnet-4-6',
+  qa:         'google/gemini-flash-1.5-8b',
+  embedding:  'openai/text-embedding-ada-002',
+} as const;
+
+export const INTERVIEW_VERSION = 1;
+
 // ─── Platform character limits ────────────────────────────────────────────────
 
 export const PLATFORM_CHAR_LIMITS = {
