@@ -22,6 +22,8 @@ const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL = '7d';
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const BCRYPT_COST = 12;
+const DUMMY_PASSWORD_HASH =
+  '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
 export interface TokenPair {
   accessToken: string;
@@ -90,9 +92,10 @@ export class AuthService {
     }
 
     const user = await this.usersService.findByEmail(dto.email);
-    const passwordMatches = user
-      ? await bcrypt.compare(dto.password, user.passwordHash)
-      : false;
+    const passwordMatches = await bcrypt.compare(
+      dto.password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
 
     if (!user || !passwordMatches) {
       await this.lockoutService.recordFailure(dto.email);
