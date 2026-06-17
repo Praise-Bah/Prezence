@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { NotificationModule } from '../notification';
-import { RedisModule } from '../redis/redis.module';
+import { RedisModule } from '../redis';
 import { IntelligenceController } from './intelligence.controller';
 import { IntelligenceService } from './intelligence.service';
 import { ContentGenerationProcessor } from './jobs/content-generation.processor';

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Redis } from 'ioredis';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { REDIS_CLIENT } from '../redis';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_TTL_SECONDS = 15 * 60;

@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { CACHE_TTL } from '@prezence/config';
 import type { SupportedPlatform } from '@prezence/types';
 import { PlatformConnection, TokenVaultService } from '../integration';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { REDIS_CLIENT } from '../redis';
 import { GithubChecker } from './checkers/github.checker';
 import { PlatformHealthCheck } from './entities/platform-health-check.entity';
 import type { HealthStatus } from './entities/platform-health-check.entity';

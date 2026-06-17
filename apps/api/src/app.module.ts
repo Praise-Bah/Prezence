@@ -13,7 +13,7 @@ import { NotificationModule } from './notification';
 import { PlatformHealthModule } from './platform-health';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './redis';
 
 @Module({
   imports: [
