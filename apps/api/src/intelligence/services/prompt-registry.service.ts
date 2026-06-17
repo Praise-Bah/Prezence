@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Redis } from 'ioredis';
 import { Repository } from 'typeorm';
+import { REDIS_CLIENT } from '../../redis/redis.constants';
 import { PromptRegistry } from '../entities/prompt-registry.entity';
 
 const PROMPT_CACHE_TTL = 60 * 60; // 1 hour
@@ -13,7 +14,7 @@ export class PromptRegistryService {
   constructor(
     @InjectRepository(PromptRegistry)
     private readonly repo: Repository<PromptRegistry>,
-    @Inject('REDIS_CLIENT')
+    @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
   ) {}
 

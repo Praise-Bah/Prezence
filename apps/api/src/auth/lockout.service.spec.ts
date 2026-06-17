@@ -4,7 +4,12 @@ import { REDIS_CLIENT } from '../redis/redis.constants';
 
 describe('LockoutService', () => {
   let service: LockoutService;
-  let redis: { get: jest.Mock; eval: jest.Mock; set: jest.Mock; del: jest.Mock };
+  let redis: {
+    get: jest.Mock;
+    eval: jest.Mock;
+    set: jest.Mock;
+    del: jest.Mock;
+  };
 
   beforeEach(async () => {
     redis = {
