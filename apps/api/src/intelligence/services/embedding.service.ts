@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { AI_MODELS } from '@prezence/config';
 import { AiUsageService } from '../../ai';
 
 export interface SimilarEmbedding {
