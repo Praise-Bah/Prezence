@@ -12,6 +12,17 @@ import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
 import { ContentService } from './content.service';
 import { RegenerateDto } from './dto/regenerate.dto';
 
+const SUPPORTED_PLATFORM_ENUM = {
+  linkedin: 'linkedin',
+  github: 'github',
+  instagram: 'instagram',
+  facebook: 'facebook',
+  fiverr: 'fiverr',
+  freelancer: 'freelancer',
+  tiktok: 'tiktok',
+  twitter: 'twitter',
+} as const satisfies Record<SupportedPlatform, SupportedPlatform>;
+
 @Controller('content')
 export class ContentController {
   constructor(private readonly contentService: ContentService) {}
