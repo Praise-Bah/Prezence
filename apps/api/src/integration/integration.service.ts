@@ -3,18 +3,31 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import type {
+  ConnectionStatus,
   IntegrationLayer,
   PlatformPublishJobData,
   SupportedPlatform,
 } from '@prezence/types';
-import { ContentService } from '../content/content.service';
+
+import { ContentService } from '../content';
+
+export interface ConnectionSummary {
+  id: string;
+  platform: SupportedPlatform;
+  layerUsed: IntegrationLayer;
+  status: ConnectionStatus;
+  scopes: string[];
+  connectedAt: Date;
+  expiresAt: Date | null;
+}
 import { AutomationJobEntity } from './entities/automation-job.entity';
 import { PlatformConnection } from './entities/platform-connection.entity';
 import { TokenVaultService } from './services/token-vault.service';
@@ -74,7 +87,7 @@ export class IntegrationService {
 
   async disconnect(userId: string, platform: SupportedPlatform): Promise<void> {
     const connection = await this.connectionRepo.findOne({
-      where: { userId, platform },
+      where: { userId, platform, status: Not('revoked') },
     });
     if (!connection) {
       throw new NotFoundException(`No connection found for ${platform}`);
@@ -83,8 +96,27 @@ export class IntegrationService {
     this.logger.log(`Platform disconnected: ${platform} for user ${userId}`);
   }
 
-  async getConnections(userId: string): Promise<PlatformConnection[]> {
-    return this.connectionRepo.find({ where: { userId } });
+  async getConnections(userId: string): Promise<ConnectionSummary[]> {
+    const rows = await this.connectionRepo.find({ where: { userId } });
+    return rows.map(
+      ({
+        id,
+        platform,
+        layerUsed,
+        status,
+        scopes,
+        connectedAt,
+        expiresAt,
+      }) => ({
+        id,
+        platform,
+        layerUsed,
+        status,
+        scopes,
+        connectedAt,
+        expiresAt,
+      }),
+    );
   }
 
   async triggerPublish(
@@ -97,6 +129,15 @@ export class IntegrationService {
     if (!connection) {
       throw new ConflictException(
         `No active connection for ${platform}. Connect the platform first via POST /integration/connect.`,
+      );
+    }
+
+    // Reject unsupported platforms before the job enters the queue so no
+    // retry attempts are wasted on a deterministically-failing stub.
+    if (platform !== 'github') {
+      throw new ServiceUnavailableException(
+        `L3A browser automation for ${platform} is not yet available. ` +
+          'Check back after the Phase 2 release.',
       );
     }
 
