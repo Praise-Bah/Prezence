@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
+import { ContentModule } from './content/content.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RateLimitGuard } from './auth/guards/rate-limit.guard';
@@ -29,6 +30,7 @@ import { RedisModule } from './redis/redis.module';
     AuthModule,
     BillingModule,
     IntelligenceModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [
