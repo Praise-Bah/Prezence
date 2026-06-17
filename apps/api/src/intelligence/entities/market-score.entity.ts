@@ -2,11 +2,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import type { SupportedPlatform } from '@prezence/types';
 
+@Index('market_scores_user_platform_unique_idx', ['userId', 'platform'], {
+  unique: true,
+})
 @Entity({ schema: 'public', name: 'market_scores' })
 export class MarketScore {
   @PrimaryGeneratedColumn('uuid')

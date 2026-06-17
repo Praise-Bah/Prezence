@@ -180,29 +180,18 @@ export class ContentGenerationProcessor extends WorkerHost {
       };
     }
 
-    // 7. Upsert profile_data
-    const existing = await this.profileRepo.findOne({
-      where: { userId, platform, interviewVersion },
-    });
-
-    if (existing) {
-      await this.profileRepo.update(existing.id, {
+    // 7. Upsert profile_data atomically by user/platform/version.
+    await this.profileRepo.upsert(
+      {
+        userId,
+        platform,
+        interviewVersion,
         content: { ...generated.sections },
         qualityScore: qa.quality_score,
         generatedAt: new Date(),
-      });
-    } else {
-      await this.profileRepo.save(
-        this.profileRepo.create({
-          userId,
-          platform,
-          interviewVersion,
-          content: { ...generated.sections },
-          qualityScore: qa.quality_score,
-          generatedAt: new Date(),
-        }),
-      );
-    }
+      },
+      ['userId', 'platform', 'interviewVersion'],
+    );
 
     // 8. Compute and store market score
     const completeness = this.computeCompleteness(generated.sections);
@@ -216,12 +205,10 @@ export class ContentGenerationProcessor extends WorkerHost {
       (completeness + keywordDensity + marketDemand + recency) / 4,
     );
 
-    const existingScore = await this.marketScoreRepo.findOne({
-      where: { userId, platform },
-    });
-
-    if (existingScore) {
-      await this.marketScoreRepo.update(existingScore.id, {
+    await this.marketScoreRepo.upsert(
+      {
+        userId,
+        platform,
         score: overallScore,
         completeness,
         keywordDensity,
@@ -229,22 +216,9 @@ export class ContentGenerationProcessor extends WorkerHost {
         recency,
         recommendations: qa.suggestions ?? [],
         computedAt: new Date(),
-      });
-    } else {
-      await this.marketScoreRepo.save(
-        this.marketScoreRepo.create({
-          userId,
-          platform,
-          score: overallScore,
-          completeness,
-          keywordDensity,
-          marketDemand,
-          recency,
-          recommendations: qa.suggestions ?? [],
-          computedAt: new Date(),
-        }),
-      );
-    }
+      },
+      ['userId', 'platform'],
+    );
 
     // 9. Cache result with versioned key
     const cacheKey = `gen:${userId}:${platform}:v${String(interviewVersion)}`;
