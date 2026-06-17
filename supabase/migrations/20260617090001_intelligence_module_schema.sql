@@ -29,21 +29,21 @@ create index interview_responses_user_id_idx on public.interview_responses(user_
 
 alter table public.interview_responses enable row level security;
 
-create policy "interview_responses_select_own"
+create policy "interview_responses_select"
   on public.interview_responses for select
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id or private.is_admin((select auth.uid())));
 
-create policy "interview_responses_insert_own"
+create policy "interview_responses_insert"
   on public.interview_responses for insert
-  with check (auth.uid() = user_id);
+  with check ((select auth.uid()) = user_id);
 
-create policy "interview_responses_update_own"
+create policy "interview_responses_update"
   on public.interview_responses for update
-  using (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id);
 
-create policy "interview_responses_admin_all"
-  on public.interview_responses for all
-  using (public.is_admin(auth.uid()));
+create policy "interview_responses_admin_delete"
+  on public.interview_responses for delete
+  using (private.is_admin((select auth.uid())));
 
 -- Seed: active prompt templates for generation (Claude Sonnet) and QA (Gemini Flash)
 insert into public.prompt_registry (name, version, template, model, is_active) values
