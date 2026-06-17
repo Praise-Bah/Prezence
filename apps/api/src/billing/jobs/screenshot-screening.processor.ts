@@ -7,7 +7,7 @@ import { QUEUE_NAMES, SCREENING } from '@prezence/config';
 import type { SubscriptionPlan } from '@prezence/types';
 import { SubscriptionRequest } from '../entities/subscription-request.entity';
 import { ScreenshotScreenerService } from '../screenshot-screener.service';
-import { UsersService } from '../../auth/users.service';
+import { UsersService } from '../../auth';
 import { NotificationService } from '../../notification';
 
 export interface ScreeningJobData {
@@ -55,7 +55,7 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
     let newStatus: SubscriptionRequest['status'];
 
     if (result.score >= SCREENING.confidence.HIGH) {
-      newStatus = 'provisional';
+      newStatus = 'confirmed';
       await this.usersService.updatePlan(userId, plan);
       try {
         await this.notificationService.sendPaymentApproved(userId, plan);

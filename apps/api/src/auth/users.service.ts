@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
+import type { SubscriptionPlan } from '@prezence/types';
 import { User } from './entities/user.entity';
 
 export interface CreateUserInput {
@@ -27,9 +28,11 @@ export class UsersService {
 
   async updatePlan(
     userId: string,
-    plan: import('@prezence/types').SubscriptionPlan,
+    plan: SubscriptionPlan,
+    manager?: EntityManager,
   ): Promise<void> {
-    await this.usersRepository.update(userId, { plan });
+    const repository = manager?.getRepository(User) ?? this.usersRepository;
+    await repository.update(userId, { plan });
   }
 
   async create(input: CreateUserInput): Promise<User> {

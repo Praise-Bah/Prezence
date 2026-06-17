@@ -8,7 +8,6 @@ import type {
 } from '@prezence/types';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const VISION_MODEL = 'anthropic/claude-sonnet-4-6';
 
 function stripCodeFences(raw: string): string {
   return raw
@@ -60,13 +59,14 @@ Score guide: 85-100 = HIGH, 60-84 = MEDIUM, 40-59 = LOW, 0-39 = SUSPICIOUS.
 Be strict: reject edited/cropped screenshots, wrong amounts, wrong providers.`;
 
     const apiKey = this.config.getOrThrow<string>('OPENROUTER_API_KEY');
+    const model = this.config.getOrThrow<string>('SCREENSHOT_AI_MODEL');
 
     const response = await axios.post<{
       choices: [{ message: { content: string } }];
     }>(
       OPENROUTER_URL,
       {
-        model: VISION_MODEL,
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           {

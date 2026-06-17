@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsOptional,
+  Matches,
   validateSync,
 } from 'class-validator';
 
@@ -22,6 +23,13 @@ class EnvironmentVariables {
 
   @IsNotEmpty()
   OPENROUTER_API_KEY!: string;
+
+  @IsNotEmpty()
+  @Matches(/^[a-zA-Z0-9._/-]+$/, {
+    message:
+      'SCREENSHOT_AI_MODEL must be a valid model identifier (e.g. anthropic/claude-sonnet-4-6)',
+  })
+  SCREENSHOT_AI_MODEL!: string;
 
   @IsNotEmpty()
   R2_ACCOUNT_ID!: string;
