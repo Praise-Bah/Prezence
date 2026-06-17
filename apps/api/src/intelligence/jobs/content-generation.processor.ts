@@ -172,29 +172,20 @@ export class ContentGenerationProcessor extends WorkerHost {
       };
     }
 
-    // 6. Upsert profile_data
-    const existing = await this.profileRepo.findOne({
-      where: { userId, platform, interviewVersion },
-    });
-
-    if (existing) {
-      await this.profileRepo.update(existing.id, {
+    // 6. Upsert profile_data — atomic ON CONFLICT DO UPDATE against
+    // profile_data_user_platform_version_unique_idx to prevent TOCTOU races
+    // between concurrent jobs with the same (userId, platform, interviewVersion).
+    await this.profileRepo.upsert(
+      {
+        userId,
+        platform,
+        interviewVersion,
         content: { ...generated.sections },
         qualityScore: qa.quality_score,
         generatedAt: new Date(),
-      });
-    } else {
-      await this.profileRepo.save(
-        this.profileRepo.create({
-          userId,
-          platform,
-          interviewVersion,
-          content: { ...generated.sections },
-          qualityScore: qa.quality_score,
-          generatedAt: new Date(),
-        }),
-      );
-    }
+      },
+      ['userId', 'platform', 'interviewVersion'],
+    );
 
     // 7. Compute and store market score
     const completeness = this.computeCompleteness(generated.sections);
