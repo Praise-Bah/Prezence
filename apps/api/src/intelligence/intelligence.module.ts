@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { NotificationModule } from '../notification/notification.module';
 import { RedisModule } from '../redis/redis.module';
 import { IntelligenceController } from './intelligence.controller';
 import { IntelligenceService } from './intelligence.service';
@@ -26,6 +27,7 @@ import { PromptRegistryService } from './services/prompt-registry.service';
     ]),
     BullModule.registerQueue({ name: QUEUE_NAMES.content_generation }),
     RedisModule,
+    NotificationModule,
   ],
   controllers: [IntelligenceController],
   providers: [

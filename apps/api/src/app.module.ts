@@ -8,6 +8,7 @@ import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing/billing.module';
 import { ContentModule } from './content/content.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
+import { NotificationModule } from './notification/notification.module';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
@@ -28,6 +29,7 @@ import { RedisModule } from './redis/redis.module';
     BillingModule,
     IntelligenceModule,
     ContentModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
