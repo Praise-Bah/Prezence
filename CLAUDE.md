@@ -42,6 +42,8 @@ exported service. No circular imports.
 ## Patterns to Follow
 - Use class-validator DTOs on every NestJS controller input
 - Use TypeORM with parameterized queries only — no raw string interpolation
+- NEVER use `public.is_admin(...)` in RLS policies — it was dropped in migration 012.
+  Always use `private.is_admin((select auth.uid()))` for admin checks in all new migrations.
 - BullMQ for all async jobs — never await browser automation inline
 - Versioned cache keys: gen:${userId}:${platform}:v${interviewVersion}
 - Idempotent webhooks via UNIQUE constraint on provider_event_id

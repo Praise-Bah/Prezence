@@ -103,6 +103,41 @@ export interface MarketFitScore {
   computed_at: string;
 }
 
+// ─── Intelligence / Content Generation ───────────────────────────────────────
+
+export interface InterviewAnswers {
+  name:              string;
+  title:             string;
+  experience_years:  string;
+  skills:            string;
+  bio:               string;
+  achievements:      string;
+  looking_for:       string;
+  target_audience:   string;
+  languages_spoken?: string;
+}
+
+export interface ContentGenerationJobData {
+  userId:              string;
+  platform:            SupportedPlatform;
+  interviewResponseId: string;
+  interviewVersion:    number;
+  userLanguage:        'en' | 'fr' | 'camfranglais';
+}
+
+export interface GeneratedSections {
+  sections:          Record<string, string>;
+  keywords_used:     string[];
+  character_counts:  Record<string, number>;
+}
+
+export interface QaResult {
+  quality_score:       number;
+  passes_constraints:  boolean;
+  issues:              string[];
+  suggestions:         string[];
+}
+
 // ─── API Response shapes ─────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {

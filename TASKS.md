@@ -43,15 +43,19 @@
   OpenRouter Claude Sonnet vision → auto-approve / provisional / reject); admin
   review endpoints (system_admin / support roles); migration 20260616120001 applied;
   6 unit tests; CI green
+- IntelligenceModule merged (PR #10): RAG pipeline — interview answers → pgvector
+  embeddings → cosine similarity retrieval → Claude Sonnet generation → Gemini Flash
+  QA pass → profile_data + market_scores upsert → Redis versioned cache; IVFFlat →
+  HNSW index fix (Greptile comment from PR #4); interview_responses table; seeded
+  prompt templates; 41 unit tests total; CI green
 
 ## 🔄 In Progress
 - develop → staging promotion (auto-PR created, awaiting CI + manual merge)
 
 ## 📋 Up Next
-1. Merge develop → staging → main (same flow as AuthModule)
-2. IntelligenceModule — RAG pipeline, prompt registry, model routing (OpenRouter)
-3. IntegrationModule — L3A Playwright workers (BullMQ, Smartproxy)
-4. IVFFlat → HNSW index fix on ai_embeddings (Greptile comment from PR #4, deferred)
+1. Merge develop → staging → main (same flow as previous modules)
+2. ContentModule — platform-specific content delivery, cache read endpoints, re-generation triggers
+3. IntegrationModule — L3A Playwright workers (BullMQ, Smartproxy), platform publishing
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at `~/.mcp-servers/{supabase,github}` (npx hits a Node 22 ESM resolution bug for `@supabase/mcp-server-supabase` on Windows). Each developer must run, once:
