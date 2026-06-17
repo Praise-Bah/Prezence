@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseEnumPipe,
+  Post,
+  Request,
+} from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
+import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
 import { GenerateContentDto } from './dto/generate-content.dto';
 import { IntelligenceService } from './intelligence.service';
 
@@ -18,7 +27,8 @@ export class IntelligenceController {
   @Get('profile/:platform')
   async getProfile(
     @Request() req: { user: { userId: string } },
-    @Param('platform') platform: SupportedPlatform,
+    @Param('platform', new ParseEnumPipe(SUPPORTED_PLATFORM_ENUM))
+    platform: SupportedPlatform,
   ) {
     return this.intelligenceService.getProfile(req.user.userId, platform);
   }
@@ -26,7 +36,8 @@ export class IntelligenceController {
   @Get('market-fit/:platform')
   async getMarketFit(
     @Request() req: { user: { userId: string } },
-    @Param('platform') platform: SupportedPlatform,
+    @Param('platform', new ParseEnumPipe(SUPPORTED_PLATFORM_ENUM))
+    platform: SupportedPlatform,
   ) {
     return this.intelligenceService.getMarketFit(req.user.userId, platform);
   }
