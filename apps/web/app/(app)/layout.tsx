@@ -2,14 +2,12 @@ import { requireUser } from '../../lib/auth';
 import { Sidebar } from '../../components/layout/sidebar';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  await requireUser();
+  const user = await requireUser();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </div>
+    <div className="flex h-screen overflow-hidden bg-[#f8f9fa] p-3 gap-3">
+      <Sidebar user={user} />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
     </div>
   );
 }
