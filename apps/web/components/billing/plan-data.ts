@@ -31,7 +31,7 @@ export const PLANS: PlanDefinition[] = [
       'Email support',
     ],
     highlight: false,
-    buttonText: 'Get Free Plan',
+    buttonText: 'Get Started – Free',
     buttonVariant: 'blue',
     showPaymentBadges: true,
   },

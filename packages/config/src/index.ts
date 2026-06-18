@@ -66,7 +66,7 @@ export const PLAN_PLATFORM_LIMITS = {
   free:         2,
   starter:      2,   // same as free but with better AI
   professional: 5,
-  elite:        Infinity,
+  elite:        999, // effectively unlimited; avoids Infinity which serialises to null in JSON
 } as const;
 
 // ─── Screenshot screening thresholds ───────────────────────────────────────────
