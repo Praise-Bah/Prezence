@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-interface OpenRouterMessage {
+export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
@@ -31,7 +31,12 @@ export class ModelRouterService {
     model: string,
     messages: OpenRouterMessage[],
     options: { max_tokens?: number } = {},
-  ): Promise<{ content: string; totalTokens: number }> {
+  ): Promise<{
+    content: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  }> {
     const apiKey = this.config.getOrThrow<string>('OPENROUTER_API_KEY');
 
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -61,6 +66,8 @@ export class ModelRouterService {
     const data = (await response.json()) as ChatResponse;
     return {
       content: data.choices[0]?.message.content ?? '',
+      promptTokens: data.usage?.prompt_tokens ?? 0,
+      completionTokens: data.usage?.completion_tokens ?? 0,
       totalTokens: data.usage?.total_tokens ?? 0,
     };
   }

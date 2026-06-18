@@ -5,7 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { REDIS_CLIENT } from '../redis';
 import { ContentService } from './content.service';
 
 const mockProfile = (platform = 'linkedin'): ProfileData =>

@@ -22,8 +22,6 @@ const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL = '7d';
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const BCRYPT_COST = 12;
-// Timing-only fallback for missing users. It is never stored on accounts and
-// is intentionally independent from migration placeholder hashes.
 const DUMMY_PASSWORD_HASH =
   '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 

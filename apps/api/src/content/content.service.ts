@@ -10,7 +10,7 @@ import type {
   SupportedPlatform,
 } from '@prezence/types';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
-import { REDIS_CLIENT } from '../redis/redis.constants';
+import { REDIS_CLIENT } from '../redis';
 
 export interface PlatformSummary {
   platform: SupportedPlatform;

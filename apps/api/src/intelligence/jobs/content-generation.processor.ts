@@ -4,25 +4,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { Job } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { Repository } from 'typeorm';
-import {
-  AI_MODELS,
-  CACHE_TTL,
-  PLATFORM_CHAR_LIMITS,
-  QUEUE_NAMES,
-} from '@prezence/config';
+import { CACHE_TTL, PLATFORM_CHAR_LIMITS, QUEUE_NAMES } from '@prezence/config';
 import type {
   ContentGenerationJobData,
   GeneratedSections,
   QaResult,
 } from '@prezence/types';
+import { AiUsageService, PromptRegistryService } from '../../ai';
+import { REDIS_CLIENT } from '../../redis';
+import { NotificationService } from '../../notification';
 import { InterviewResponse } from '../entities/interview-response.entity';
 import { MarketScore } from '../entities/market-score.entity';
 import { ProfileData } from '../entities/profile-data.entity';
-import { NotificationService } from '../../notification';
-import { REDIS_CLIENT } from '../../redis/redis.constants';
 import { EmbeddingService } from '../services/embedding.service';
-import { ModelRouterService } from '../services/model-router.service';
-import { PromptRegistryService } from '../services/prompt-registry.service';
 
 function stripCodeFences(raw: string): string {
   return raw
@@ -42,7 +36,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     private readonly profileRepo: Repository<ProfileData>,
     @InjectRepository(MarketScore)
     private readonly marketScoreRepo: Repository<MarketScore>,
-    private readonly modelRouter: ModelRouterService,
+    private readonly aiUsage: AiUsageService,
     private readonly promptRegistry: PromptRegistryService,
     private readonly embeddingService: EmbeddingService,
     private readonly notificationService: NotificationService,
@@ -93,8 +87,16 @@ export class ContentGenerationProcessor extends WorkerHost {
       .map(([k, v]) => `${k}: ${String(v)}`)
       .join('\n');
 
-    // 2. Retrieve similar embeddings before storing the current interview to
-    // avoid contaminating its own RAG context.
+    // 2. Store embedding for this interview (for future RAG retrieval)
+    await this.embeddingService.generateAndStore(
+      userId,
+      'interview_response',
+      interviewResponseId,
+      answersText,
+      { platform, interviewVersion },
+    );
+
+    // 3. Retrieve similar embeddings for RAG context
     const similar = await this.embeddingService.findSimilar(
       userId,
       answersText,
@@ -110,7 +112,7 @@ export class ContentGenerationProcessor extends WorkerHost {
             .join('\n\n')
         : 'No similar profiles found yet.';
 
-    // 3. Load generation prompt
+    // 4. Load generation prompt
     const genPrompt = await this.promptRegistry.getActive('generate_profile');
     const charLimits = JSON.stringify(
       PLATFORM_CHAR_LIMITS[platform] ?? {},
@@ -125,12 +127,14 @@ export class ContentGenerationProcessor extends WorkerHost {
       language: userLanguage,
     });
 
-    // 4. Generate content (Claude Sonnet)
-    const { content: rawGenerated } = await this.modelRouter.generate(
-      AI_MODELS.generation,
-      [{ role: 'user', content: renderedPrompt }],
-      { max_tokens: 4096 },
-    );
+    // 5. Generate content via Claude Sonnet
+    const { content: rawGenerated } = await this.aiUsage.generate({
+      task: 'generation',
+      userId,
+      feature: 'profile_generation',
+      messages: [{ role: 'user', content: renderedPrompt }],
+      options: { max_tokens: 4096 },
+    });
 
     let generated: GeneratedSections;
     try {
@@ -142,7 +146,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       throw new Error('Content generation returned invalid JSON');
     }
 
-    // 5. QA pass (Gemini Flash)
+    // 6. QA pass via Gemini Flash
     const qaPromptTemplate = await this.promptRegistry.getActive('qa_profile');
     const renderedQaPrompt = this.promptRegistry.render(
       qaPromptTemplate.template,
@@ -153,11 +157,13 @@ export class ContentGenerationProcessor extends WorkerHost {
       },
     );
 
-    const { content: rawQa } = await this.modelRouter.generate(
-      AI_MODELS.qa,
-      [{ role: 'user', content: renderedQaPrompt }],
-      { max_tokens: 1024 },
-    );
+    const { content: rawQa } = await this.aiUsage.generate({
+      task: 'qa',
+      userId,
+      feature: 'qa_scoring',
+      messages: [{ role: 'user', content: renderedQaPrompt }],
+      options: { max_tokens: 1024 },
+    });
 
     let qa: QaResult;
     try {
@@ -172,9 +178,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       };
     }
 
-    // 6. Upsert profile_data — atomic ON CONFLICT DO UPDATE against
-    // profile_data_user_platform_version_unique_idx to prevent TOCTOU races
-    // between concurrent jobs with the same (userId, platform, interviewVersion).
+    // 7. Upsert profile_data — atomic ON CONFLICT DO UPDATE
     await this.profileRepo.upsert(
       {
         userId,
@@ -187,43 +191,31 @@ export class ContentGenerationProcessor extends WorkerHost {
       ['userId', 'platform', 'interviewVersion'],
     );
 
-    // 7. Compute and store market score
+    // 8. Compute and store market score
     const completeness = this.computeCompleteness(generated.sections);
     const keywordDensity = Math.min(
       100,
       (generated.keywords_used?.length ?? 0) * 10,
     );
-    const marketDemand = 70; // static for MVP; IntelligenceModule Phase 2 will compute dynamically
+    const marketDemand = 70; // static for MVP; Phase 2 will compute dynamically
     const recency = 100;
     const overallScore = Math.round(
       (completeness + keywordDensity + marketDemand + recency) / 4,
     );
 
-    const marketScoreData = {
-      score: overallScore,
-      completeness,
-      keywordDensity,
-      marketDemand,
-      recency,
-      recommendations: qa.suggestions ?? [],
-      computedAt: new Date(),
-    };
     await this.marketScoreRepo.upsert(
       {
         userId,
         platform,
-        ...marketScoreData,
+        score: overallScore,
+        completeness,
+        keywordDensity,
+        marketDemand,
+        recency,
+        recommendations: qa.suggestions ?? [],
+        computedAt: new Date(),
       },
       ['userId', 'platform'],
-    );
-
-    // 8. Store embedding last so failed retries cannot self-contaminate RAG.
-    await this.embeddingService.generateAndStore(
-      userId,
-      'interview_response',
-      interviewResponseId,
-      answersText,
-      { platform, interviewVersion },
     );
 
     // 9. Cache result with versioned key
