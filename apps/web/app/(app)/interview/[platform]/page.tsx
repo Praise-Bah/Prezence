@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '../../../../lib/auth';
 import { Topbar } from '../../../../components/layout/topbar';
 import { InterviewForm } from '../../../../components/interview/interview-form';
+import { PlatformIcon } from '../../../../components/content/platform-icon';
 import { formatPlatformName } from '../../../../lib/utils';
 
 const SUPPORTED_PLATFORMS = [
@@ -27,16 +28,23 @@ export default async function InterviewPage({ params }: { params: Params }) {
   const user = await requireUser();
 
   return (
-    <div>
-      <Topbar user={user} title={`${formatPlatformName(platform)} Interview`} />
-      <div className="mx-auto max-w-2xl p-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Tell us about yourself</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Answer these questions once and our AI will craft the perfect {formatPlatformName(platform)} profile for you.
-          </p>
+    <div className="flex h-full flex-col overflow-hidden bg-[#f8f9fa]">
+      <Topbar user={user} title="Generate content" />
+      <div className="flex-1 overflow-y-auto px-5 py-6 lg:px-8">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-8 flex items-center gap-4">
+            <PlatformIcon platform={platform} />
+            <div>
+              <h2 className="text-2xl font-medium text-[#1a1a2e]">
+                {formatPlatformName(platform)} interview
+              </h2>
+              <p className="mt-1 text-sm text-[#717182]">
+                Create AI-powered content for your {formatPlatformName(platform)} profile
+              </p>
+            </div>
+          </div>
+          <InterviewForm platform={platform} />
         </div>
-        <InterviewForm platform={platform} />
       </div>
     </div>
   );
