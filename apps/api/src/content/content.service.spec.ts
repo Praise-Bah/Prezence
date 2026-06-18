@@ -4,9 +4,8 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { InterviewResponse } from '../intelligence/entities/interview-response.entity';
-import { MarketScore } from '../intelligence/entities/market-score.entity';
-import { ProfileData } from '../intelligence/entities/profile-data.entity';
+import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
+import { REDIS_CLIENT } from '../redis';
 import { ContentService } from './content.service';
 
 const mockProfile = (platform = 'linkedin'): ProfileData =>
@@ -80,7 +79,7 @@ describe('ContentService', () => {
           provide: getQueueToken(QUEUE_NAMES.content_generation),
           useValue: queue,
         },
-        { provide: 'REDIS_CLIENT', useValue: redis },
+        { provide: REDIS_CLIENT, useValue: redis },
       ],
     }).compile();
 
