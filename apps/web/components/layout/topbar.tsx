@@ -6,9 +6,9 @@ interface TopbarProps {
   title: string;
 }
 
-const planVariant: Record<string, 'default' | 'success' | 'purple'> = {
+const planVariant: Record<string, 'default' | 'success' | 'info' | 'purple'> = {
   free: 'default',
-  starter: 'info' as never,
+  starter: 'info',
   professional: 'purple',
   elite: 'success',
 };

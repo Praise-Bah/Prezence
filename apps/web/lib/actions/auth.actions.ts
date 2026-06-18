@@ -4,11 +4,16 @@ import { redirect } from 'next/navigation';
 import type { UserProfile } from '@prezence/types';
 import { setAuthCookies, clearAuthCookies } from '../auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_BASE = process.env.API_URL ?? 'http://localhost:3001';
+
+// JwtToken is our own signed JWT — distinct from third-party OAuth tokens
+// that require AES-256-GCM encryption per CLAUDE.md. These are stored
+// exclusively in httpOnly cookies; they are never written to the database.
+type JwtToken = string;
 
 interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
+  access_token: JwtToken;
+  refresh_token: JwtToken;
   user: UserProfile;
 }
 

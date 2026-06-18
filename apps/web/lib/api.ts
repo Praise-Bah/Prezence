@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+// Server-only: use API_URL (no NEXT_PUBLIC_ prefix) so the internal address
+// is never inlined into the client bundle.
+const API_BASE = process.env.API_URL ?? 'http://localhost:3001';
 
 export class ApiError extends Error {
   constructor(

@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { COOKIE_AT, COOKIE_RT, AT_MAX_AGE, RT_MAX_AGE } from '../../../../lib/auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_BASE = process.env.API_URL ?? 'http://localhost:3001';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const next = request.nextUrl.searchParams.get('next') ?? '/dashboard';
+  const rawNext = request.nextUrl.searchParams.get('next') ?? '/dashboard';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard';
   const refreshToken = request.cookies.get(COOKIE_RT)?.value;
 
   if (!refreshToken) {

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import type { SupportedPlatform } from '@prezence/types';
 import { regenerateAction } from '../../lib/actions/intelligence.actions';
 import { formatPlatformName } from '../../lib/utils';
 
@@ -32,7 +33,7 @@ export function ContentViewer({ platform, content, cached }: ContentViewerProps)
   function handleRegenerate() {
     setRegenError(null);
     startTransition(async () => {
-      const result = await regenerateAction(platform as never);
+      const result = await regenerateAction(platform as SupportedPlatform);
       if ('error' in result) {
         setRegenError(result.error);
       } else {
