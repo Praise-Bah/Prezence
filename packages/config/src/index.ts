@@ -45,17 +45,28 @@ export const QUEUE_NAMES = {
 } as const;
 
 // ─── Plan prices ─────────────────────────────────────────────────────────────
+// starter: one-time payment (access until manually cancelled)
+// professional / elite: monthly recurring, screenshot re-verified each month
 
 export const PLAN_PRICES_XAF = {
-  starter:      3000,
-  professional: 6000,
-  elite:        12000,
+  starter:      3_000,
+  professional: 6_000,
+  elite:        12_000,
 } as const;
 
 export const PLAN_PRICES_USD = {
   starter:      5,
   professional: 10,
   elite:        20,
+} as const;
+
+// ─── Per-plan platform connection limits ──────────────────────────────────────
+
+export const PLAN_PLATFORM_LIMITS = {
+  free:         2,
+  starter:      2,   // same as free but with better AI
+  professional: 5,
+  elite:        Infinity,
 } as const;
 
 // ─── Screenshot screening thresholds ───────────────────────────────────────────
