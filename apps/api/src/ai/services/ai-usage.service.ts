@@ -24,7 +24,12 @@ export class AiUsageService {
     feature: string;
     messages: OpenRouterMessage[];
     options?: { max_tokens?: number };
-  }): Promise<{ content: string; totalTokens: number }> {
+  }): Promise<{
+    content: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  }> {
     const model = AI_MODELS[params.task];
     const result = await this.modelRouter.generate(
       model,
@@ -39,7 +44,12 @@ export class AiUsageService {
       completionTokens: result.completionTokens,
       totalTokens: result.totalTokens,
     });
-    return { content: result.content, totalTokens: result.totalTokens };
+    return {
+      content: result.content,
+      promptTokens: result.promptTokens,
+      completionTokens: result.completionTokens,
+      totalTokens: result.totalTokens,
+    };
   }
 
   async embed(params: {

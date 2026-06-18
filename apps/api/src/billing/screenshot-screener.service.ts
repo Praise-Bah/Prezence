@@ -37,7 +37,7 @@ Analyze the provided payment screenshot and return a JSON object only — no mar
 
 ## Expected payment details
 - Provider: ${providerName}
-- Amount: XAF ${expectedAmountXaf} (accept within ±200 XAF to cover transfer fees)
+- Amount: XAF ${expectedAmountXaf} (users may send slightly more due to transfer fees — see amount matching rules below)
 - Recipient number: ${paymentRecipientNumber}
 
 ## How to recognise an authentic MTN MoMo SMS
