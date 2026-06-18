@@ -16,32 +16,27 @@ export class ChatService {
     promptTokens: number;
     completionTokens: number;
   }> {
-    const messages: Array<{
-      role: 'system' | 'user' | 'assistant';
-      content: string;
-    }> = [{ role: 'system', content: SYSTEM_PROMPT }];
-
-    if (params.context) {
-      messages.push({
-        role: 'system',
-        content: `User context: ${params.context}`,
-      });
-    }
-
-    messages.push({ role: 'user', content: params.message });
+    // Merge context into the single system message — some LLM providers
+    // reject or silently drop multiple system-role entries.
+    const systemContent = params.context
+      ? `${SYSTEM_PROMPT}\n\nUser context: ${params.context}`
+      : SYSTEM_PROMPT;
 
     const result = await this.aiUsage.generate({
       task: 'generation',
       userId: params.userId,
       feature: 'ai-chat',
-      messages,
+      messages: [
+        { role: 'system', content: systemContent },
+        { role: 'user', content: params.message },
+      ],
       options: { max_tokens: 1024 },
     });
 
     return {
       reply: result.content,
-      promptTokens: 0,
-      completionTokens: result.totalTokens,
+      promptTokens: result.promptTokens,
+      completionTokens: result.completionTokens,
     };
   }
 }
