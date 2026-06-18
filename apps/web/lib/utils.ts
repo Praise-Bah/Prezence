@@ -12,6 +12,7 @@ export function formatPlatformName(platform: string): string {
     instagram: 'Instagram',
     facebook: 'Facebook',
     fiverr: 'Fiverr',
+    upwork: 'Upwork',
     freelancer: 'Freelancer',
     tiktok: 'TikTok',
     twitter: 'Twitter / X',

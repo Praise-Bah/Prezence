@@ -16,6 +16,7 @@ export type SubscriptionStatus =
 export interface UserProfile {
   id: string;
   email: string;
+  name?: string;
   role: UserRole;
   plan: SubscriptionPlan;
   country_code: string;

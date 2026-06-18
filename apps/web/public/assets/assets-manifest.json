@@ -1,0 +1,420 @@
+{
+  "version": 1,
+  "figmaFile": "https://www.figma.com/design/IhSLWUKuuxCEqsj8tHM6Nh/Prezence",
+  "exportedAt": "2026-06-18T10:24:17.629Z",
+  "assets": [
+    {
+      "path": "/assets/brand/shared-logo-mark@64x64.png",
+      "figmaNodeId": "440:7957",
+      "figmaName": "Prezence logo 1",
+      "screens": [
+        "landing-page",
+        "create-account-page",
+        "log-in-page",
+        "dashboard-screen",
+        "prezence-ai"
+      ],
+      "role": "brand-mark",
+      "width": 64,
+      "height": 64,
+      "format": "png"
+    },
+    {
+      "path": "/assets/brand/shared-logo-full@343x90.png",
+      "figmaNodeId": "440:7956",
+      "figmaName": "Logo",
+      "screens": [
+        "create-account-page",
+        "log-in-page"
+      ],
+      "role": "logo",
+      "width": 343,
+      "height": 90,
+      "format": "png"
+    },
+    {
+      "path": "/assets/brand/auth-logo-stack@343x90.png",
+      "figmaNodeId": "440:7956",
+      "figmaName": "Logo",
+      "screens": [
+        "create-account-page",
+        "log-in-page"
+      ],
+      "role": "auth-logo-stack",
+      "width": 343,
+      "height": 90,
+      "format": "png"
+    },
+    {
+      "path": "/assets/brand/shared-logo-sidebar@133x32.png",
+      "figmaNodeId": "45:3916",
+      "figmaName": "Logo (Collapsed=No)",
+      "screens": [
+        "dashboard-screen"
+      ],
+      "role": "sidebar-logo",
+      "width": 133,
+      "height": 32,
+      "format": "png"
+    },
+    {
+      "path": "/assets/brand/shared-logo-sidebar-icon@32x32.png",
+      "figmaNodeId": "45:3921",
+      "figmaName": "Logo (Collapsed=Yes)",
+      "screens": [
+        "dashboard-screen"
+      ],
+      "role": "sidebar-logo-icon",
+      "width": 32,
+      "height": 32,
+      "format": "png"
+    },
+    {
+      "path": "/assets/backgrounds/landing-page-bg@1440x7000.webp",
+      "figmaNodeId": "355:6681",
+      "figmaName": "bg",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "background",
+      "width": 1440,
+      "height": 7000,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/backgrounds/auth-split-panel@959x1112.webp",
+      "figmaNodeId": "440:7954",
+      "figmaName": "Background image",
+      "screens": [
+        "create-account-page",
+        "log-in-page"
+      ],
+      "role": "split-panel-background",
+      "width": 959,
+      "height": 1112,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/illustrations/landing-hero-ai-chat@644x517.webp",
+      "figmaNodeId": "355:6738",
+      "figmaName": "Image (User chatting with Prezence AI on a smartphone)",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "hero-illustration",
+      "width": 644,
+      "height": 517,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/illustrations/landing-feature-card-a@544x362.webp",
+      "figmaNodeId": "355:6923",
+      "figmaName": "Rectangle 41960",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "feature-illustration",
+      "width": 544,
+      "height": 362,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/illustrations/landing-testimonial-amara@40x40.webp",
+      "figmaNodeId": "354:10243",
+      "figmaName": "Image (Amara Tchamba)",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "testimonial-avatar",
+      "width": 40,
+      "height": 40,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/illustrations/landing-testimonial-kevin@40x40.webp",
+      "figmaNodeId": "354:10264",
+      "figmaName": "Image (Kevin Mbeki)",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "testimonial-avatar",
+      "width": 40,
+      "height": 40,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/illustrations/landing-testimonial-grace@40x40.webp",
+      "figmaNodeId": "354:10285",
+      "figmaName": "Image (Grace Fominyam)",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "testimonial-avatar",
+      "width": 40,
+      "height": 40,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/misc/landing-logo-strip@848x64.png",
+      "figmaNodeId": "354:10663",
+      "figmaName": "Image",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "logo-strip",
+      "width": 848,
+      "height": 64,
+      "format": "png"
+    },
+    {
+      "path": "/assets/social/shared-google@24x24.svg",
+      "figmaNodeId": "12:2726",
+      "figmaName": "Property 1=Google Logo",
+      "screens": [
+        "create-account-page",
+        "log-in-page"
+      ],
+      "role": "social-oauth",
+      "width": 24,
+      "height": 24,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/social/shared-apple@24x24.svg",
+      "figmaNodeId": "12:2733",
+      "figmaName": "Property 1=Apple Logo",
+      "screens": [
+        "create-account-page",
+        "log-in-page"
+      ],
+      "role": "social-oauth",
+      "width": 24,
+      "height": 24,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/social/shared-facebook@24x24.svg",
+      "figmaNodeId": "12:2724",
+      "figmaName": "Property 1=Facebook Logo",
+      "screens": [
+        "create-account-page",
+        "log-in-page"
+      ],
+      "role": "social-oauth",
+      "width": 24,
+      "height": 24,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/payments/shared-mtn-momo@44x44.svg",
+      "figmaNodeId": "493:10809",
+      "figmaName": "MtnMomoBadge",
+      "screens": [
+        "landing-page",
+        "subscription",
+        "payment-modal"
+      ],
+      "role": "payment-badge",
+      "width": 44,
+      "height": 44,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/payments/shared-mtn-momo-wordmark@88x34.svg",
+      "figmaNodeId": "493:11150",
+      "figmaName": "MtnMomoLogo",
+      "screens": [
+        "payment-modal"
+      ],
+      "role": "payment-wordmark",
+      "width": 88,
+      "height": 34,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/payments/shared-orange-money@44x44.svg",
+      "figmaNodeId": "493:10826",
+      "figmaName": "OrangeMoneyBadge",
+      "screens": [
+        "landing-page",
+        "subscription",
+        "payment-modal"
+      ],
+      "role": "payment-badge",
+      "width": 44,
+      "height": 44,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/payments/shared-orange-money-wordmark@99x34.svg",
+      "figmaNodeId": "493:11073",
+      "figmaName": "OrangeMoneyLogo",
+      "screens": [
+        "payment-modal"
+      ],
+      "role": "payment-wordmark",
+      "width": 99,
+      "height": 34,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/payments/shared-visa@36x24.svg",
+      "figmaNodeId": "494:6853",
+      "figmaName": "Icon - Visa",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "payment-card",
+      "width": 36,
+      "height": 24,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/payments/shared-mastercard@36x24.svg",
+      "figmaNodeId": "494:6856",
+      "figmaName": "Icon - Mastercard",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "payment-card",
+      "width": 36,
+      "height": 24,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/platforms/shared-fiverr@25x25.svg",
+      "figmaNodeId": "461:9128",
+      "figmaName": "simple-icons:fiverr",
+      "screens": [
+        "landing-page",
+        "dashboard-screen"
+      ],
+      "role": "platform-logo",
+      "width": 25,
+      "height": 25,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/platforms/shared-freelancer@39x29.svg",
+      "figmaNodeId": "368:3039",
+      "figmaName": "Freelancer logo",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "platform-logo",
+      "width": 39,
+      "height": 29,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/platforms/shared-upwork@40x24.svg",
+      "figmaNodeId": "367:3233",
+      "figmaName": "Upwork logo",
+      "screens": [
+        "landing-page"
+      ],
+      "role": "platform-logo",
+      "width": 40,
+      "height": 24,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/platforms/shared-instagram@18x18.svg",
+      "figmaNodeId": "45:2368",
+      "figmaName": "IONIcon/L/logo/instagram",
+      "screens": [
+        "profile-screen",
+        "dashboard-screen"
+      ],
+      "role": "platform-logo",
+      "width": 18,
+      "height": 18,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/platforms/shared-twitter@21x21.svg",
+      "figmaNodeId": "45:2367",
+      "figmaName": "IONIcon/L/logo/twitter",
+      "screens": [
+        "profile-screen",
+        "dashboard-screen"
+      ],
+      "role": "platform-logo",
+      "width": 21,
+      "height": 21,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/platforms/shared-platform-logo@36x36.svg",
+      "figmaNodeId": "329:5907",
+      "figmaName": "PlatformLogo",
+      "screens": [
+        "platform-health-dashboard"
+      ],
+      "role": "platform-logo",
+      "width": 36,
+      "height": 36,
+      "format": "svg"
+    },
+    {
+      "path": "/assets/illustrations/shared-upgrade-hero@280x221.webp",
+      "figmaNodeId": "45:3981",
+      "figmaName": "Upgrade Hero",
+      "screens": [
+        "dashboard-screen",
+        "prezence-ai",
+        "generate-content",
+        "notification",
+        "platforms",
+        "profile-screen"
+      ],
+      "role": "upgrade-card",
+      "width": 280,
+      "height": 221,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/illustrations/shared-upgrade-illustration@248x165.webp",
+      "figmaNodeId": "45:3983",
+      "figmaName": "Moneyverse Home Office",
+      "screens": [
+        "dashboard-screen",
+        "prezence-ai",
+        "generate-content",
+        "notification",
+        "platforms",
+        "profile-screen"
+      ],
+      "role": "upgrade-illustration",
+      "width": 248,
+      "height": 165,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/placeholders/shared-user-avatar@40x40.webp",
+      "figmaNodeId": "45:3953",
+      "figmaName": "Avatar (Collapsed=Yes)",
+      "screens": [
+        "dashboard-screen",
+        "profile-screen"
+      ],
+      "role": "placeholder-avatar",
+      "width": 40,
+      "height": 40,
+      "format": "webp"
+    },
+    {
+      "path": "/assets/placeholders/shared-user-avatar@72x72.webp",
+      "figmaNodeId": "312:8009",
+      "figmaName": "Big Shoes Avatar",
+      "screens": [
+        "dashboard-screen",
+        "profile-screen"
+      ],
+      "role": "placeholder-avatar",
+      "width": 72,
+      "height": 72,
+      "format": "webp"
+    }
+  ]
+}
