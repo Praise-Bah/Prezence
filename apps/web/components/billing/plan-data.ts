@@ -20,7 +20,7 @@ export interface PlanDefinition {
 export const PLANS: PlanDefinition[] = [
   {
     name: 'starter',
-    displayName: 'Starter',
+    displayName: 'Free',
     price: 'XAF 3,000',
     priceSuffix: null,
     billingNote: 'One-time payment',
@@ -31,7 +31,7 @@ export const PLANS: PlanDefinition[] = [
       'Email support',
     ],
     highlight: false,
-    buttonText: 'Get Starter',
+    buttonText: 'Get Free Plan',
     buttonVariant: 'blue',
     showPaymentBadges: true,
   },
@@ -81,7 +81,7 @@ export const PLAN_MODAL_DISPLAY: Record<
   { label: string; price: string; priceColor: string }
 > = {
   starter: {
-    label: 'Prezence Starter',
+    label: 'Prezence Free',
     price: 'XAF 3,000 (one-time)',
     priceColor: '#1a1a2e',
   },
