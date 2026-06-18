@@ -35,6 +35,10 @@ export class NotificationService {
     await this.enqueue(userId, 'payment_approved', { plan });
   }
 
+  async sendPaymentProvisional(userId: string, plan: string): Promise<void> {
+    await this.enqueue(userId, 'payment_provisional', { plan });
+  }
+
   async sendPaymentRejected(userId: string, reason: string): Promise<void> {
     await this.enqueue(userId, 'payment_rejected', { reason });
   }

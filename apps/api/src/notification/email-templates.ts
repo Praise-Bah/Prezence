@@ -1,6 +1,7 @@
 export type EmailType =
   | 'payment_initiated'
   | 'payment_approved'
+  | 'payment_provisional'
   | 'payment_rejected'
   | 'content_ready'
   | 'content_failed';
@@ -61,6 +62,18 @@ export function renderTemplate(
           <h2>Welcome to Prezence ${s(data.plan)}!</h2>
           <p>Hi ${s(data.name, 'there')},</p>
           <p>Your payment has been verified and your <strong>${s(data.plan)}</strong> plan is now active.</p>
+          <p><a href="https://prezence.app/dashboard" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Go to dashboard</a></p>
+        `),
+      };
+
+    case 'payment_provisional':
+      return {
+        subject: 'Your Prezence payment is under review',
+        html: base(`
+          <h2>Payment received — under review</h2>
+          <p>Hi ${s(data.name, 'there')},</p>
+          <p>We've received your screenshot for the <strong>${s(data.plan)}</strong> plan and granted you provisional access while our team verifies the transaction.</p>
+          <p style="color:#d97706;font-weight:600">⚠️ Your access may be reversed if the payment cannot be confirmed. You will receive a follow-up email once the review is complete.</p>
           <p><a href="https://prezence.app/dashboard" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Go to dashboard</a></p>
         `),
       };
