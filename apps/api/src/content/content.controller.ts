@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseEnumPipe, Post, Request } from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
+import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
 import { ContentService } from './content.service';
 import { RegenerateDto } from './dto/regenerate.dto';
 
@@ -15,7 +16,7 @@ export class ContentController {
   @Get(':platform')
   getContent(
     @Request() req: { user: { userId: string } },
-    @Param('platform') platform: SupportedPlatform,
+    @Param('platform', new ParseEnumPipe(SUPPORTED_PLATFORM_ENUM)) platform: SupportedPlatform,
   ) {
     return this.contentService.getContent(req.user.userId, platform);
   }
