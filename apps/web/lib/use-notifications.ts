@@ -79,21 +79,33 @@ export function useNotifications(initialNotifications: Notification[]) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-    void fetch(`/api/notifications/${id}/read`, { method: 'PATCH' }).catch(() => {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: false } : n)),
-      );
-    });
+    void fetch(`/api/notifications/${id}/read`, { method: 'PATCH' })
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP error');
+      })
+      .catch(() => {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, read: false } : n)),
+        );
+      });
   };
 
   const markAllRead = (): void => {
-    setNotifications((prev) => {
-      const before = prev;
-      void fetch('/api/notifications/read-all', { method: 'PATCH' }).catch(() => {
-        setNotifications(before);
+    const idsToRevert = notifications
+      .filter((n) => !n.read)
+      .map((n) => n.id);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    void fetch('/api/notifications/read-all', { method: 'PATCH' })
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP error');
+      })
+      .catch(() => {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            idsToRevert.includes(n.id) ? { ...n, read: false } : n,
+          ),
+        );
       });
-      return prev.map((n) => ({ ...n, read: true }));
-    });
   };
 
   return { notifications, unreadCount, markRead, markAllRead };
