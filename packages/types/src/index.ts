@@ -22,7 +22,7 @@ export interface UserProfile {
   timezone?: string | null;
   role: UserRole;
   plan: SubscriptionPlan;
-  country_code: string;
+  country_code: string | null;
   language: 'en' | 'fr' | 'camfranglais';
   emailNotifications?: boolean;
   pushNotifications?: boolean;
