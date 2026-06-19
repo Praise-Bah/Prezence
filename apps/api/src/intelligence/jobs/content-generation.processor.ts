@@ -57,6 +57,13 @@ export class ContentGenerationProcessor extends WorkerHost {
     } catch (err) {
       try {
         await this.notificationService.sendContentFailed(userId, platform);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'profile',
+          title: 'Profile generation failed',
+          body: `We could not generate your ${platform} profiles. Please try again.`,
+          actionUrl: '/content',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,
@@ -233,6 +240,13 @@ export class ContentGenerationProcessor extends WorkerHost {
         platform,
         qa.quality_score,
       );
+      await this.notificationService.createNotification({
+        userId,
+        type: 'profile',
+        title: 'Profiles ready to review',
+        body: 'Your AI-generated profiles are ready.',
+        actionUrl: '/content',
+      });
     } catch (notifyErr) {
       this.logger.warn(
         `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,

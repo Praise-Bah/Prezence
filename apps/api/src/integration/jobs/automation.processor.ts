@@ -75,6 +75,13 @@ export class AutomationProcessor extends WorkerHost {
 
       try {
         await this.notificationService.sendContentReady(userId, platform, 100);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'automation',
+          title: 'Profiles updated',
+          body: `Your ${platform} profile has been updated.`,
+          actionUrl: '/platforms',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,
@@ -90,6 +97,13 @@ export class AutomationProcessor extends WorkerHost {
 
       try {
         await this.notificationService.sendContentFailed(userId, platform);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'automation',
+          title: 'Update failed',
+          body: `Your ${platform} profile update failed. Please retry.`,
+          actionUrl: '/platforms',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,

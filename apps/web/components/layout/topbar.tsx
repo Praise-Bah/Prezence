@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import type { UserProfile } from '@prezence/types';
-import { Bell, ChevronDown, MessageSquare, Search } from 'lucide-react';
+import { ChevronDown, MessageSquare, Search } from 'lucide-react';
 import { Badge } from '../ui/badge';
+import { NotificationBell } from './notification-bell';
 
 interface TopbarProps {
   user: UserProfile;
@@ -48,13 +49,7 @@ export function Topbar({ user, title }: TopbarProps) {
           <MessageSquare className="h-[22px] w-[22px] text-[#1a1a2e]" strokeWidth={1.75} />
         </button>
 
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f8f9fa] shadow-[0_4px_3px_rgba(0,0,0,0.02)] transition hover:bg-[#eef2ff]"
-        >
-          <Bell className="h-[22px] w-[22px] text-[#1a1a2e]" strokeWidth={1.75} />
-        </button>
+        <NotificationBell />
 
         <div className="flex items-center gap-2.5 rounded-3xl bg-[#f8f9fa] py-1.5 pl-1.5 pr-5">
           <Image
