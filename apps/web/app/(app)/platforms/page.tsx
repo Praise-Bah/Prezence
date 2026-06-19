@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { requireUser } from '../../../lib/auth';
 import { api, ApiError } from '../../../lib/api';
 import { Topbar } from '../../../components/layout/topbar';
@@ -7,33 +8,46 @@ import {
   PlatformHealthCard,
   type PlatformHealthCheck,
 } from '../../../components/platforms/platform-health-card';
+import { ConnectPlatforms } from '../../../components/platforms/connect-platforms';
 
 export const metadata: Metadata = { title: 'Platforms' };
 
 type ApiPlatformHealthRow = Parameters<typeof mapApiHealthCheck>[0];
 
-interface ApiFetchResult {
-  checks: PlatformHealthCheck[];
-  apiStatus: 'ok' | 'empty' | '404' | 'error';
+interface ApiConnection {
+  platform: string;
+  status: string;
 }
 
-async function fetchPlatformHealth(): Promise<ApiFetchResult> {
-  try {
-    const data = await api.get<ApiPlatformHealthRow[]>('/platform-health');
-    const checks = data.map((row, index) => mapApiHealthCheck(row, index));
-    return { checks, apiStatus: checks.length > 0 ? 'ok' : 'empty' };
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      return { checks: [], apiStatus: '404' };
-    }
-    return { checks: [], apiStatus: 'error' };
-  }
+interface ApiFetchResult {
+  checks: PlatformHealthCheck[];
+  connectedPlatforms: string[];
+}
+
+async function fetchPlatformData(): Promise<ApiFetchResult> {
+  const [healthResult, connectionsResult] = await Promise.allSettled([
+    api.get<ApiPlatformHealthRow[]>('/platform-health'),
+    api.get<ApiConnection[]>('/integration/connections'),
+  ]);
+
+  const checks =
+    healthResult.status === 'fulfilled'
+      ? healthResult.value.map((row, index) => mapApiHealthCheck(row, index))
+      : [];
+
+  const connectedPlatforms =
+    connectionsResult.status === 'fulfilled'
+      ? connectionsResult.value
+          .filter((c) => c.status === 'active')
+          .map((c) => c.platform)
+      : [];
+
+  return { checks, connectedPlatforms };
 }
 
 export default async function PlatformsPage() {
   const user = await requireUser();
-  const { checks } = await fetchPlatformHealth();
-
+  const { checks, connectedPlatforms } = await fetchPlatformData();
   const healthyCount = checks.filter((c) => c.status === 'healthy').length;
 
   return (
@@ -58,8 +72,7 @@ export default async function PlatformsPage() {
         {checks.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#cdd5e9] bg-white p-12 text-center">
             <p className="text-[#787c91]">
-              No platform health data yet. Connect a platform and run a health check from the
-              API to see status here.
+              No platform health data yet. Connect a platform to see status here.
             </p>
           </div>
         ) : (
@@ -69,6 +82,10 @@ export default async function PlatformsPage() {
             ))}
           </div>
         )}
+
+        <Suspense>
+          <ConnectPlatforms connectedPlatforms={connectedPlatforms} />
+        </Suspense>
       </div>
     </div>
   );
