@@ -13,9 +13,8 @@ import {
 } from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
 import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Public } from '../auth/decorators/public.decorator';
-import type { AuthenticatedUser } from '../auth/jwt-payload.interface';
+import { CurrentUser, Public } from '../auth';
+import type { AuthenticatedUser } from '../auth';
 import { ConnectPlatformDto } from './dto/connect-platform.dto';
 import { IntegrationService } from './integration.service';
 import { OAuthService, type OAuthPlatform } from './services/oauth.service';
@@ -97,8 +96,7 @@ export class IntegrationController {
     @Query('state') state: string | undefined,
     @Query('error') oauthError: string | undefined,
   ): Promise<{ url: string }> {
-    const frontendUrl =
-      process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 
     if (oauthError || !code || !state) {
       return { url: `${frontendUrl}/platforms?error=${platform}_oauth_denied` };
@@ -108,8 +106,8 @@ export class IntegrationController {
 
     const redirectUrl = await this.oauthService.handleCallback(
       platform as OAuthPlatform,
-      code!,
-      state!,
+      code,
+      state,
     );
     return { url: redirectUrl };
   }

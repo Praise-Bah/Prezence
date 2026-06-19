@@ -24,7 +24,12 @@ export class PasswordResetToken {
   @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt!: Date;
 
-  @Column({ name: 'used_at', type: 'timestamptz', nullable: true, default: null })
+  @Column({
+    name: 'used_at',
+    type: 'timestamptz',
+    nullable: true,
+    default: null,
+  })
   usedAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

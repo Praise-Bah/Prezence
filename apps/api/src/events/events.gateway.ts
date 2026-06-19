@@ -43,7 +43,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const userId = await this.redis.get(`ws:ticket:${ticket}`);
     if (!userId) {
-      this.logger.warn(`WS rejected: invalid/expired ticket (socket ${client.id})`);
+      this.logger.warn(
+        `WS rejected: invalid/expired ticket (socket ${client.id})`,
+      );
       client.disconnect(true);
       return;
     }

@@ -63,15 +63,11 @@ function SelectField({
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {
-  const [fullName, setFullName] = useState(
-    (user as unknown as Record<string, unknown>).name as string | undefined
-    ?? displayNameFromEmail(user.email),
-  );
+  const userExt = user as UserProfile & { name?: string | null; bio?: string | null };
+  const [fullName, setFullName] = useState(userExt.name ?? displayNameFromEmail(user.email));
   const [country, setCountry] = useState(user.country_code ?? 'CM');
   const [language, setLanguage] = useState<string>(user.language ?? 'en');
-  const [bio, setBio] = useState(
-    ((user as unknown as Record<string, unknown>).bio as string | undefined) ?? '',
-  );
+  const [bio, setBio] = useState(userExt.bio ?? '');
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 

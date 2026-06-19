@@ -265,5 +265,4 @@ export class ContentGenerationProcessor extends WorkerHost {
       `Generation complete for job — quality: ${String(qa.quality_score)}, market-fit score enqueued`,
     );
   }
-
 }

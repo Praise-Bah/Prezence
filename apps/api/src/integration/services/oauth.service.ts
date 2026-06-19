@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import type { Redis } from 'ioredis';
@@ -19,7 +24,10 @@ export class OAuthService {
     private readonly integrationService: IntegrationService,
   ) {}
 
-  async generateAuthUrl(platform: OAuthPlatform, userId: string): Promise<string> {
+  async generateAuthUrl(
+    platform: OAuthPlatform,
+    userId: string,
+  ): Promise<string> {
     const state = randomUUID();
     await this.redis.set(`oauth:state:${state}`, userId, 'EX', STATE_TTL);
 
@@ -36,12 +44,15 @@ export class OAuthService {
     code: string,
     state: string,
   ): Promise<string> {
-    const frontendUrl = this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
+    const frontendUrl =
+      this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
     const stateKey = `oauth:state:${state}`;
     const userId = await this.redis.get(stateKey);
 
     if (!userId) {
-      throw new BadRequestException('Invalid or expired OAuth state. Please try again.');
+      throw new BadRequestException(
+        'Invalid or expired OAuth state. Please try again.',
+      );
     }
     await this.redis.del(stateKey);
 
@@ -55,7 +66,9 @@ export class OAuthService {
         await this.exchangeMeta(userId, code, redirectUri);
       }
     } catch (err) {
-      this.logger.warn(`OAuth exchange failed for ${platform} user ${userId}: ${String(err)}`);
+      this.logger.warn(
+        `OAuth exchange failed for ${platform} user ${userId}: ${String(err)}`,
+      );
       return `${frontendUrl}/platforms?error=${platform}_oauth_failed`;
     }
 
@@ -94,7 +107,9 @@ export class OAuthService {
     redirectUri: string,
   ): Promise<void> {
     const clientId = this.config.getOrThrow<string>('LINKEDIN_CLIENT_ID');
-    const clientSecret = this.config.getOrThrow<string>('LINKEDIN_CLIENT_SECRET');
+    const clientSecret = this.config.getOrThrow<string>(
+      'LINKEDIN_CLIENT_SECRET',
+    );
 
     const res = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',

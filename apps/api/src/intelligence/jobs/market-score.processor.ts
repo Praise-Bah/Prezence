@@ -24,7 +24,9 @@ function stripCodeFences(raw: string): string {
 }
 
 function computeCompleteness(sections: Record<string, string>): number {
-  const values = Object.values(sections).filter((v) => v && v.trim().length > 0);
+  const values = Object.values(sections).filter(
+    (v) => v && v.trim().length > 0,
+  );
   if (values.length === 0) return 0;
   const avgLen = values.reduce((s, v) => s + v.length, 0) / values.length;
   return Math.min(100, Math.round((avgLen / 500) * 100));
@@ -48,8 +50,14 @@ export class MarketScoreProcessor extends WorkerHost {
 
     const completeness = computeCompleteness(content);
     const keywordDensity = Math.min(100, keywordsUsed.length * 10);
+    // TODO(Phase 3): compute recency from content.generatedAt; using 100 as placeholder.
     const recency = 100;
-    const marketDemand = await this.computeMarketDemand(userId, platform, content, keywordsUsed);
+    const marketDemand = await this.computeMarketDemand(
+      userId,
+      platform,
+      content,
+      keywordsUsed,
+    );
 
     const overallScore = Math.round(
       (completeness + keywordDensity + marketDemand + recency) / 4,

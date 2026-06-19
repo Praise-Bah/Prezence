@@ -77,7 +77,9 @@ export class AuthService {
     private readonly redis: Redis,
   ) {}
 
-  async issueWsTicket(userId: string): Promise<{ ticket: string; expiresIn: number }> {
+  async issueWsTicket(
+    userId: string,
+  ): Promise<{ ticket: string; expiresIn: number }> {
     const ticket = randomUUID();
     await this.redis.set(`ws:ticket:${ticket}`, userId, 'EX', 30);
     return { ticket, expiresIn: 30 };
@@ -119,12 +121,18 @@ export class AuthService {
     const tokens = await this.issueTokenPair(user, randomUUID());
 
     this.emailQueue
-      .add('send', { userId: user.id, type: 'user_registered', data: {} }, {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 5000 },
-      })
+      .add(
+        'send',
+        { userId: user.id, type: 'user_registered', data: {} },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+        },
+      )
       .catch((err: unknown) => {
-        this.logger.warn(`Failed to enqueue welcome email for ${user.id}: ${String(err)}`);
+        this.logger.warn(
+          `Failed to enqueue welcome email for ${user.id}: ${String(err)}`,
+        );
       });
 
     return { user: this.sanitizeUser(user), ...tokens };
@@ -230,8 +238,12 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    const matches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
-    if (!matches) throw new UnauthorizedException('Current password is incorrect');
+    const matches = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
+    if (!matches)
+      throw new UnauthorizedException('Current password is incorrect');
 
     const newHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.usersService.updatePasswordHash(userId, newHash);
@@ -244,7 +256,9 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
-    const GENERIC = { message: 'If that email exists, a reset link has been sent.' };
+    const GENERIC = {
+      message: 'If that email exists, a reset link has been sent.',
+    };
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) return GENERIC; // Don't reveal whether the email exists
 
@@ -253,20 +267,31 @@ export class AuthService {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     await this.resetTokenRepository.save(
-      this.resetTokenRepository.create({ userId: user.id, tokenHash, expiresAt }),
+      this.resetTokenRepository.create({
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      }),
     );
 
-    const appUrl = this.configService.get<string>('APP_URL') ?? 'https://prezence.app';
+    const appUrl =
+      this.configService.get<string>('APP_URL') ?? 'https://prezence.app';
     const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`;
 
     this.emailQueue
-      .add('send', {
-        userId: user.id,
-        type: 'password_reset',
-        data: { resetUrl },
-      }, { attempts: 3, backoff: { type: 'exponential', delay: 5000 } })
+      .add(
+        'send',
+        {
+          userId: user.id,
+          type: 'password_reset',
+          data: { resetUrl },
+        },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+      )
       .catch((err: unknown) => {
-        this.logger.warn(`Failed to enqueue password reset email: ${String(err)}`);
+        this.logger.warn(
+          `Failed to enqueue password reset email: ${String(err)}`,
+        );
       });
 
     return GENERIC;
@@ -278,13 +303,20 @@ export class AuthService {
       where: { tokenHash },
     });
 
-    if (!record || record.usedAt !== null || record.expiresAt.getTime() < Date.now()) {
+    if (
+      !record ||
+      record.usedAt !== null ||
+      record.expiresAt.getTime() < Date.now()
+    ) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
     const newHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.usersService.updatePasswordHash(record.userId, newHash);
-    await this.resetTokenRepository.update({ id: record.id }, { usedAt: new Date() });
+    await this.resetTokenRepository.update(
+      { id: record.id },
+      { usedAt: new Date() },
+    );
     await this.refreshTokenRepository.update(
       { userId: record.userId, revokedAt: IsNull() },
       { revokedAt: new Date() },

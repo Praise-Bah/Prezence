@@ -54,16 +54,22 @@ describe('ChatService', () => {
   it('merges context into the system message when provided', async () => {
     mockGenerate();
 
-    await service.chat({ message: 'tip', context: 'I am a developer', userId: 'u1' });
+    await service.chat({
+      message: 'tip',
+      context: 'I am a developer',
+      userId: 'u1',
+    });
 
-    const call = aiUsage.generate.mock.calls[0][0] as { messages: { role: string; content: string }[] };
+    const call = aiUsage.generate.mock.calls[0][0] as {
+      messages: { role: string; content: string }[];
+    };
     const systemMsg = call.messages.find((m) => m.role === 'system');
     expect(systemMsg?.content).toContain('I am a developer');
   });
 
   it('returns reply and token counts', async () => {
     mockGenerate('great job!');
-    (aiUsage.generate as jest.Mock).mockResolvedValue({
+    aiUsage.generate.mockResolvedValue({
       content: 'great job!',
       promptTokens: 3,
       completionTokens: 7,
@@ -92,7 +98,9 @@ describe('ChatService', () => {
 
     await service.chat({ message: 'hello' });
 
-    const call = aiUsage.generate.mock.calls[0][0] as { messages: { role: string; content: string }[] };
+    const call = aiUsage.generate.mock.calls[0][0] as {
+      messages: { role: string; content: string }[];
+    };
     const systemMsg = call.messages.find((m) => m.role === 'system');
     expect(systemMsg?.content).not.toContain('User context');
   });
@@ -100,6 +108,8 @@ describe('ChatService', () => {
   it('propagates errors from AiUsageService', async () => {
     aiUsage.generate.mockRejectedValue(new Error('OpenRouter down'));
 
-    await expect(service.chat({ message: 'test' })).rejects.toThrow('OpenRouter down');
+    await expect(service.chat({ message: 'test' })).rejects.toThrow(
+      'OpenRouter down',
+    );
   });
 });

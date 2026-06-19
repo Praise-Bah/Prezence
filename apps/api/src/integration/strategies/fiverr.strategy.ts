@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
 import { ProxyService } from '../services/proxy.service';
 import { BasePublisherStrategy } from './base-publisher.strategy';
@@ -64,7 +68,10 @@ export class FiverrStrategy extends BasePublisherStrategy {
       const page = await context.newPage();
 
       this.logger.debug('Navigating to Fiverr profile editor');
-      await page.goto(PROFILE_EDITOR_URL, { waitUntil: 'networkidle', timeout: 30_000 });
+      await page.goto(PROFILE_EDITOR_URL, {
+        waitUntil: 'networkidle',
+        timeout: 30_000,
+      });
 
       // Professional title (tagline)
       const tagline = content['tagline'];
@@ -87,9 +94,13 @@ export class FiverrStrategy extends BasePublisherStrategy {
       await saveBtn.click();
 
       // Wait for save to confirm — either a success toast or URL change
-      await page.waitForSelector(SEL.successToast, { timeout: 10_000 }).catch(() => {
-        this.logger.warn('No success toast detected after save — proceeding anyway');
-      });
+      await page
+        .waitForSelector(SEL.successToast, { timeout: 10_000 })
+        .catch(() => {
+          this.logger.warn(
+            'No success toast detected after save — proceeding anyway',
+          );
+        });
 
       // Take a screenshot as proof
       const screenshotBuffer = await page.screenshot({ fullPage: false });

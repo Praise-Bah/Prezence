@@ -52,7 +52,10 @@ export class NotificationService {
     });
   }
 
-  async markRead(notificationId: string, userId: string): Promise<{ updated: boolean }> {
+  async markRead(
+    notificationId: string,
+    userId: string,
+  ): Promise<{ updated: boolean }> {
     const result = await this.notificationRepo.update(
       { id: notificationId, userId },
       { isRead: true },

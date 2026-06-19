@@ -7,8 +7,8 @@ import {
   Param,
   Patch,
 } from '@nestjs/common';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../auth/jwt-payload.interface';
+import { CurrentUser } from '../auth';
+import type { AuthenticatedUser } from '../auth';
 import type { Notification } from './entities/notification.entity';
 import { NotificationService } from './notification.service';
 

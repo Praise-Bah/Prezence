@@ -12,18 +12,17 @@ const mockEmbeddingService = () => ({
   generateAndStore: jest.fn(),
 });
 
-const makeProfile = (overrides: Partial<ProfileData> = {}): ProfileData =>
-  ({
-    id: 'prof-1',
-    userId: 'user-1',
-    platform: 'linkedin' as const,
-    content: { headline: 'Dev at Prezence', summary: 'I build things.' },
-    interviewVersion: 1,
-    qualityScore: 80,
-    generatedAt: new Date(),
-    createdAt: new Date(),
-    ...overrides,
-  }) as ProfileData;
+const makeProfile = (overrides: Partial<ProfileData> = {}): ProfileData => ({
+  id: 'prof-1',
+  userId: 'user-1',
+  platform: 'linkedin' as const,
+  content: { headline: 'Dev at Prezence', summary: 'I build things.' },
+  interviewVersion: 1,
+  qualityScore: 80,
+  generatedAt: new Date(),
+  createdAt: new Date(),
+  ...overrides,
+});
 
 describe('EmbeddingCronService', () => {
   let service: EmbeddingCronService;
@@ -35,7 +34,10 @@ describe('EmbeddingCronService', () => {
     const module = await Test.createTestingModule({
       providers: [
         EmbeddingCronService,
-        { provide: getRepositoryToken(ProfileData), useFactory: mockProfileRepo },
+        {
+          provide: getRepositoryToken(ProfileData),
+          useFactory: mockProfileRepo,
+        },
         { provide: EmbeddingService, useFactory: mockEmbeddingService },
       ],
     }).compile();
@@ -46,7 +48,10 @@ describe('EmbeddingCronService', () => {
   });
 
   it('calls generateAndStore for each profile returned by the repo', async () => {
-    profileRepo.find.mockResolvedValue([makeProfile(), makeProfile({ id: 'prof-2', userId: 'user-2' })]);
+    profileRepo.find.mockResolvedValue([
+      makeProfile(),
+      makeProfile({ id: 'prof-2', userId: 'user-2' }),
+    ]);
     embeddingService.generateAndStore.mockResolvedValue(undefined);
 
     await service.runNightlyEmbedding();
@@ -61,8 +66,8 @@ describe('EmbeddingCronService', () => {
 
     await service.runNightlyEmbedding();
 
-    const [userId, sourceType, sourceId, text] =
-      embeddingService.generateAndStore.mock.calls[0] as [string, string, string, string];
+    const [userId, sourceType, sourceId, text] = embeddingService
+      .generateAndStore.mock.calls[0] as [string, string, string, string];
     expect(userId).toBe('user-1');
     expect(sourceType).toBe('profile_data');
     expect(sourceId).toBe('prof-1');

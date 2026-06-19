@@ -52,7 +52,10 @@ export class UsersService {
     await repository.update(userId, { plan });
   }
 
-  async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
+  async updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
     await this.usersRepository.update(userId, { passwordHash });
   }
 

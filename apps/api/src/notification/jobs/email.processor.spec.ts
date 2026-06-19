@@ -47,7 +47,9 @@ describe('EmailProcessor', () => {
   it('skips send when RESEND_API_KEY is not configured', async () => {
     mockConfigService.get.mockReturnValue(undefined);
 
-    await processor.process(makeJob('payment_approved', 'user-1', { plan: 'professional' }));
+    await processor.process(
+      makeJob('payment_approved', 'user-1', { plan: 'professional' }),
+    );
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -56,7 +58,9 @@ describe('EmailProcessor', () => {
     mockConfigService.get.mockReturnValue('re_test_key');
     mockUsersService.findById.mockResolvedValue(null);
 
-    await processor.process(makeJob('payment_approved', 'user-1', { plan: 'professional' }));
+    await processor.process(
+      makeJob('payment_approved', 'user-1', { plan: 'professional' }),
+    );
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -79,7 +83,9 @@ describe('EmailProcessor', () => {
     mockConfigService.get.mockReturnValue('re_test_key');
     mockUsersService.findById.mockResolvedValue(mockUser);
 
-    await processor.process(makeJob('payment_approved', 'user-1', { plan: 'professional' }));
+    await processor.process(
+      makeJob('payment_approved', 'user-1', { plan: 'professional' }),
+    );
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string) as {
       subject: string;
@@ -91,7 +97,9 @@ describe('EmailProcessor', () => {
     mockConfigService.get.mockReturnValue('re_test_key');
     mockUsersService.findById.mockResolvedValue(mockUser);
 
-    await processor.process(makeJob('payment_provisional', 'user-1', { plan: 'starter' }));
+    await processor.process(
+      makeJob('payment_provisional', 'user-1', { plan: 'starter' }),
+    );
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string) as {
       subject: string;
@@ -103,7 +111,9 @@ describe('EmailProcessor', () => {
     mockConfigService.get.mockReturnValue('re_test_key');
     mockUsersService.findById.mockResolvedValue(mockUser);
 
-    await processor.process(makeJob('payment_rejected', 'user-1', { reason: 'Low confidence' }));
+    await processor.process(
+      makeJob('payment_rejected', 'user-1', { reason: 'Low confidence' }),
+    );
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string) as {
       subject: string;
@@ -115,7 +125,12 @@ describe('EmailProcessor', () => {
     mockConfigService.get.mockReturnValue('re_test_key');
     mockUsersService.findById.mockResolvedValue(mockUser);
 
-    await processor.process(makeJob('content_ready', 'user-1', { platform: 'linkedin', qualityScore: 85 }));
+    await processor.process(
+      makeJob('content_ready', 'user-1', {
+        platform: 'linkedin',
+        qualityScore: 85,
+      }),
+    );
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string) as {
       subject: string;
@@ -130,10 +145,12 @@ describe('EmailProcessor', () => {
       ok: false,
       status: 422,
       text: jest.fn().mockResolvedValue('Unprocessable Entity'),
-    } as unknown as Response);
+    });
 
     await expect(
-      processor.process(makeJob('payment_approved', 'user-1', { plan: 'elite' })),
+      processor.process(
+        makeJob('payment_approved', 'user-1', { plan: 'elite' }),
+      ),
     ).rejects.toThrow('Resend error: 422');
   });
 });

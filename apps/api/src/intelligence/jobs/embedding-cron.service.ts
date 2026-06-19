@@ -24,7 +24,9 @@ export class EmbeddingCronService {
       where: { generatedAt: MoreThan(since) },
     });
 
-    this.logger.log(`Voice-learning cron: processing ${profiles.length} profile(s) since ${since.toISOString()}`);
+    this.logger.log(
+      `Voice-learning cron: processing ${profiles.length} profile(s) since ${since.toISOString()}`,
+    );
 
     let succeeded = 0;
     let failed = 0;
@@ -48,6 +50,8 @@ export class EmbeddingCronService {
       }
     }
 
-    this.logger.log(`Voice-learning cron done — ${succeeded} succeeded, ${failed} failed`);
+    this.logger.log(
+      `Voice-learning cron done — ${succeeded} succeeded, ${failed} failed`,
+    );
   }
 }

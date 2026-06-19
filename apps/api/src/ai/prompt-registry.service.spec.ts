@@ -14,18 +14,19 @@ const mockRedis = () => ({
   set: jest.fn(),
 });
 
-const makePrompt = (overrides: Partial<PromptRegistry> = {}): PromptRegistry =>
-  ({
-    id: 'p1',
-    name: 'generate_profile',
-    template: 'Hello {{name}}',
-    model: 'anthropic/claude-sonnet-4.5',
-    isActive: true,
-    version: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides,
-  }) as PromptRegistry;
+const makePrompt = (
+  overrides: Partial<PromptRegistry> = {},
+): PromptRegistry => ({
+  id: 'p1',
+  name: 'generate_profile',
+  template: 'Hello {{name}}',
+  model: 'anthropic/claude-sonnet-4.5',
+  isActive: true,
+  version: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides,
+});
 
 describe('PromptRegistryService', () => {
   let service: PromptRegistryService;
@@ -92,7 +93,9 @@ describe('PromptRegistryService', () => {
       redis.get.mockResolvedValue(null);
       repo.findOne.mockResolvedValue(null);
 
-      await expect(service.getActive('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getActive('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('uses the correct cache key per prompt name', async () => {
@@ -107,7 +110,9 @@ describe('PromptRegistryService', () => {
 
   describe('render', () => {
     it('replaces a single template variable', () => {
-      expect(service.render('Hello {{name}}!', { name: 'Praise' })).toBe('Hello Praise!');
+      expect(service.render('Hello {{name}}!', { name: 'Praise' })).toBe(
+        'Hello Praise!',
+      );
     });
 
     it('replaces multiple template variables', () => {
@@ -124,7 +129,9 @@ describe('PromptRegistryService', () => {
     });
 
     it('leaves unknown placeholders unchanged', () => {
-      expect(service.render('Hello {{name}}', { other: 'value' })).toBe('Hello {{name}}');
+      expect(service.render('Hello {{name}}', { other: 'value' })).toBe(
+        'Hello {{name}}',
+      );
     });
 
     it('returns the template unchanged when variables map is empty', () => {
