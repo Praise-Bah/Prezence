@@ -7,6 +7,8 @@ import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import type { PlatformPublishJobData } from '@prezence/types';
 import { ScheduledPost } from '../entities/scheduled-post.entity';
+// TODO: move AutomationJobEntity to a SharedModule — direct path import is intentional to avoid
+// circular dep (IntegrationModule already imports ContentModule via its barrel).
 import { AutomationJobEntity } from '../../integration/entities/automation-job.entity';
 
 type ScheduledJobData = PlatformPublishJobData & { scheduledPostId: string };
