@@ -2,6 +2,7 @@ import { randomBytes, createHash } from 'crypto';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -13,8 +14,10 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import type { Queue } from 'bullmq';
+import type { Redis } from 'ioredis';
 import { IsNull, Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { REDIS_CLIENT } from '../redis';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -70,7 +73,15 @@ export class AuthService {
     private readonly resetTokenRepository: Repository<PasswordResetToken>,
     @InjectQueue(QUEUE_NAMES.email)
     private readonly emailQueue: Queue,
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis,
   ) {}
+
+  async issueWsTicket(userId: string): Promise<{ ticket: string; expiresIn: number }> {
+    const ticket = randomUUID();
+    await this.redis.set(`ws:ticket:${ticket}`, userId, 'EX', 30);
+    return { ticket, expiresIn: 30 };
+  }
 
   sanitizeUser(user: User): SanitizedUser {
     return {

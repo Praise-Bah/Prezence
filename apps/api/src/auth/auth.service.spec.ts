@@ -8,6 +8,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { REDIS_CLIENT } from '../redis';
 import { AuthService } from './auth.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -111,6 +112,10 @@ describe('AuthService', () => {
         {
           provide: getQueueToken(QUEUE_NAMES.email),
           useValue: { add: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: REDIS_CLIENT,
+          useValue: { set: jest.fn().mockResolvedValue('OK'), del: jest.fn() },
         },
       ],
     }).compile();

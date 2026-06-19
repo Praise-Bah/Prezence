@@ -99,4 +99,9 @@ export class AuthController {
   ) {
     return this.authService.changePassword(user.userId, dto);
   }
+
+  @Get('ws-ticket')
+  async wsTicket(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.issueWsTicket(user.userId);
+  }
 }

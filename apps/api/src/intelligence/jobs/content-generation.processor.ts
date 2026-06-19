@@ -11,6 +11,7 @@ import type {
   QaResult,
 } from '@prezence/types';
 import { AiUsageService, PromptRegistryService } from '../../ai';
+import { EventsGateway } from '../../events';
 import { REDIS_CLIENT } from '../../redis';
 import { NotificationService } from '../../notification';
 import { InterviewResponse } from '../entities/interview-response.entity';
@@ -38,6 +39,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     private readonly promptRegistry: PromptRegistryService,
     private readonly embeddingService: EmbeddingService,
     private readonly notificationService: NotificationService,
+    private readonly eventsGateway: EventsGateway,
     @InjectQueue(QUEUE_NAMES.mfs_compute)
     private readonly mfsQueue: Queue<MarketFitJobData>,
     @Inject(REDIS_CLIENT)
@@ -52,9 +54,29 @@ export class ContentGenerationProcessor extends WorkerHost {
       `Processing generation job ${job.id} — ${platform} for user ${userId}`,
     );
 
+    this.eventsGateway.emitJobUpdate(userId, {
+      jobId: String(job.id),
+      type: 'content_generation',
+      platform,
+      status: 'running',
+    });
+
     try {
       await this.run(job.data);
+      this.eventsGateway.emitJobUpdate(userId, {
+        jobId: String(job.id),
+        type: 'content_generation',
+        platform,
+        status: 'completed',
+      });
     } catch (err) {
+      this.eventsGateway.emitJobUpdate(userId, {
+        jobId: String(job.id),
+        type: 'content_generation',
+        platform,
+        status: 'failed',
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
       try {
         await this.notificationService.sendContentFailed(userId, platform);
         await this.notificationService.createNotification({

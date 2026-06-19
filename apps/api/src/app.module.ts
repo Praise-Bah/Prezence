@@ -8,6 +8,7 @@ import { AiModule } from './ai';
 import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing';
 import { ContentModule } from './content';
+import { EventsModule } from './events';
 import { IntelligenceModule } from './intelligence';
 import { IntegrationModule } from './integration';
 import { NotificationModule } from './notification';
@@ -31,6 +32,7 @@ import { RedisModule } from './redis';
     AiModule,
     AuthModule,
     BillingModule,
+    EventsModule,
     IntelligenceModule,
     ContentModule,
     IntegrationModule,

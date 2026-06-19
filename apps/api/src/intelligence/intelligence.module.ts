@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { AiModule } from '../ai';
+import { EventsModule } from '../events';
 import { NotificationModule } from '../notification';
 import { RedisModule } from '../redis';
 import { IntelligenceController } from './intelligence.controller';
@@ -29,6 +30,7 @@ import { EmbeddingService } from './services/embedding.service';
     ),
     RedisModule,
     AiModule,
+    EventsModule,
     NotificationModule,
   ],
   controllers: [IntelligenceController],

@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { RedisModule } from '../redis';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
@@ -20,6 +21,7 @@ import { UsersService } from './users.service';
     TypeOrmModule.forFeature([User, RefreshToken, PasswordResetToken]),
     BullModule.registerQueue({ name: QUEUE_NAMES.email }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    RedisModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
