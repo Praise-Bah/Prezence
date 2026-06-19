@@ -75,7 +75,7 @@ export class ScheduledPostProcessor extends WorkerHost {
       );
 
       await this.scheduleRepo.update(scheduledPostId, {
-        status: 'completed',
+        status: 'dispatched',
         automationJobId: automationJob.id,
       });
 

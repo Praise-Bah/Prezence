@@ -5,7 +5,7 @@ import { BasePublisherStrategy } from './base-publisher.strategy';
 interface MetaPage {
   id: string;
   name: string;
-  access_token: string;
+  access_token: string; // Graph API field name — never log the full MetaPage object
 }
 
 interface MetaPagesResponse {
@@ -72,10 +72,12 @@ export class MetaStrategy extends BasePublisherStrategy {
       return null;
     }
 
-    const res = await fetch(`${GRAPH_BASE}/${page.id}/feed`, {
+    const { id: pageId, name: pageName, access_token: pageToken } = page;
+
+    const res = await fetch(`${GRAPH_BASE}/${pageId}/feed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, access_token: page.access_token }),
+      body: JSON.stringify({ message, access_token: pageToken }),
     });
 
     if (!res.ok) {
@@ -85,13 +87,11 @@ export class MetaStrategy extends BasePublisherStrategy {
 
     const data = (await res.json()) as MetaPostResponse;
     this.logger.log(
-      `Facebook page post created: ${data.id} on page ${page.name}`,
+      `Facebook page post created: ${data.id} on page ${pageName}`,
     );
 
     const [, postId] = data.id.split('_');
-    return postId
-      ? `https://www.facebook.com/${page.id}/posts/${postId}`
-      : null;
+    return postId ? `https://www.facebook.com/${pageId}/posts/${postId}` : null;
   }
 
   private async publishToInstagram(
@@ -104,10 +104,12 @@ export class MetaStrategy extends BasePublisherStrategy {
       return null;
     }
 
+    const { id: pageId, name: pageName, access_token: pageToken } = page;
+
     // Get the Instagram Business Account linked to this Facebook Page
     const pageRes = await fetch(
-      `${GRAPH_BASE}/${page.id}?fields=instagram_business_account`,
-      { headers: { Authorization: `Bearer ${page.access_token}` } },
+      `${GRAPH_BASE}/${pageId}?fields=instagram_business_account`,
+      { headers: { Authorization: `Bearer ${pageToken}` } },
     );
     if (!pageRes.ok) {
       const err = await pageRes.text().catch(() => '');
@@ -118,7 +120,7 @@ export class MetaStrategy extends BasePublisherStrategy {
 
     if (!igAccountId) {
       throw new Error(
-        `No Instagram Business Account linked to Facebook Page "${page.name}".`,
+        `No Instagram Business Account linked to Facebook Page "${pageName}".`,
       );
     }
 
@@ -129,7 +131,7 @@ export class MetaStrategy extends BasePublisherStrategy {
       body: JSON.stringify({
         image_url: imageUrl,
         caption,
-        access_token: page.access_token,
+        access_token: pageToken,
       }),
     });
     if (!containerRes.ok) {
@@ -148,7 +150,7 @@ export class MetaStrategy extends BasePublisherStrategy {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           creation_id: container.id,
-          access_token: page.access_token,
+          access_token: pageToken,
         }),
       },
     );

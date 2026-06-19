@@ -10,6 +10,7 @@ import type { SupportedPlatform } from '@prezence/types';
 export type ScheduledPostStatus =
   | 'scheduled'
   | 'processing'
+  | 'dispatched'
   | 'completed'
   | 'cancelled'
   | 'failed';
@@ -33,6 +34,9 @@ export class ScheduledPost {
 
   @Column({ type: 'text', default: 'scheduled' })
   status!: ScheduledPostStatus;
+
+  @Column({ name: 'bull_job_id', type: 'text', nullable: true })
+  bullJobId!: string | null;
 
   @Column({ name: 'automation_job_id', type: 'uuid', nullable: true })
   automationJobId!: string | null;

@@ -71,6 +71,7 @@ export class UsersService {
   async findOrCreateSocialUser(params: {
     email: string;
     name: string | null;
+    countryCode?: string;
   }): Promise<User> {
     const existing = await this.findByEmail(params.email);
     if (existing) {
@@ -91,7 +92,7 @@ export class UsersService {
         email: params.email,
         name: params.name,
         passwordHash,
-        countryCode: 'CM',
+        countryCode: params.countryCode ?? 'CM',
         language: 'en',
       }),
     );

@@ -222,7 +222,7 @@ export class ContentService {
     );
 
     const delayMs = scheduledAt.getTime() - Date.now();
-    await this.scheduleQueue.add(
+    const bullJob = await this.scheduleQueue.add(
       'publish-scheduled',
       {
         userId,
@@ -240,6 +240,9 @@ export class ContentService {
         removeOnFail: false,
       },
     );
+
+    await this.scheduleRepo.update(post.id, { bullJobId: String(bullJob.id) });
+    post.bullJobId = String(bullJob.id);
 
     this.logger.log(
       `Post scheduled: ${post.id} for ${userId}/${dto.platform} at ${scheduledAt.toISOString()}`,
@@ -273,15 +276,19 @@ export class ContentService {
 
     await this.scheduleRepo.update(postId, { status: 'cancelled' });
 
-    // BullMQ delayed jobs use the job ID equal to the post ID for lookup.
-    // If the job has already been picked up, the update above still marks
-    // it cancelled so the processor will skip it.
-    const jobs = await this.scheduleQueue.getDelayed();
-    const job = jobs.find((j) => {
-      const data = j.data as { scheduledPostId?: string };
-      return data.scheduledPostId === postId;
-    });
-    if (job) await job.remove();
+    // Use stored bull_job_id for O(1) lookup; fall back to full scan for
+    // rows created before this column was added.
+    if (post.bullJobId) {
+      const bullJob = await this.scheduleQueue.getJob(post.bullJobId);
+      if (bullJob) await bullJob.remove();
+    } else {
+      const jobs = await this.scheduleQueue.getDelayed();
+      const delayed = jobs.find((j) => {
+        const data = j.data as { scheduledPostId?: string };
+        return data.scheduledPostId === postId;
+      });
+      if (delayed) await delayed.remove();
+    }
 
     return { message: 'Scheduled post cancelled.' };
   }
