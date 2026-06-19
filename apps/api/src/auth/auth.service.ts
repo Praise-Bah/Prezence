@@ -283,7 +283,7 @@ export class AuthService {
 
     const appUrl =
       this.configService.get<string>('APP_URL') ?? 'https://prezence.app';
-    const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`;
+    const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
 
     this.emailQueue
       .add(
@@ -310,20 +310,24 @@ export class AuthService {
       where: { tokenHash },
     });
 
-    if (
-      !record ||
-      record.usedAt !== null ||
-      record.expiresAt.getTime() < Date.now()
-    ) {
+    if (!record || record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Atomically consume the token before touching the password.
+    // Two concurrent requests with the same token both pass the findOne
+    // above, but only one wins this conditional UPDATE — the other gets
+    // affected=0 and is rejected, closing the TOCTOU window.
+    const { affected } = await this.resetTokenRepository.update(
+      { id: record.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+    if (!affected) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
     const newHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.usersService.updatePasswordHash(record.userId, newHash);
-    await this.resetTokenRepository.update(
-      { id: record.id },
-      { usedAt: new Date() },
-    );
     await this.refreshTokenRepository.update(
       { userId: record.userId, revokedAt: IsNull() },
       { revokedAt: new Date() },
