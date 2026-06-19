@@ -1,6 +1,5 @@
 import {
   Controller,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -43,7 +42,9 @@ export class NotificationController {
   async list(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<NotificationDto[]> {
-    const notifications = await this.notificationService.listForUser(user.userId);
+    const notifications = await this.notificationService.listForUser(
+      user.userId,
+    );
     return notifications.map(toDto);
   }
 

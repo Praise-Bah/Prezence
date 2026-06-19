@@ -19,7 +19,7 @@ const mockNotification: Partial<Notification> = {
 };
 
 const mockRepo = {
-  create: jest.fn((input) => ({ ...input })),
+  create: jest.fn((input: Partial<Notification>) => ({ ...input })),
   save: jest.fn().mockResolvedValue(mockNotification),
   find: jest.fn().mockResolvedValue([mockNotification]),
   update: jest.fn().mockResolvedValue({ affected: 1 }),
