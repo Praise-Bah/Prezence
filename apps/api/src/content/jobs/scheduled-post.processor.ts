@@ -84,10 +84,14 @@ export class ScheduledPostProcessor extends WorkerHost {
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await this.scheduleRepo.update(scheduledPostId, {
-        status: 'failed',
-        errorMessage: message,
-      });
+      const maxAttempts = job.opts.attempts ?? 1;
+      const isLastAttempt = job.attemptsMade >= maxAttempts - 1;
+      if (isLastAttempt) {
+        await this.scheduleRepo.update(scheduledPostId, {
+          status: 'failed',
+          errorMessage: message,
+        });
+      }
       throw err;
     }
   }

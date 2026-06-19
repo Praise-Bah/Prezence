@@ -76,8 +76,11 @@ export class MetaStrategy extends BasePublisherStrategy {
 
     const res = await fetch(`${GRAPH_BASE}/${pageId}/feed`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, access_token: pageToken }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${pageToken}`,
+      },
+      body: JSON.stringify({ message }),
     });
 
     if (!res.ok) {
@@ -127,12 +130,11 @@ export class MetaStrategy extends BasePublisherStrategy {
     // Step 1: create media container
     const containerRes = await fetch(`${GRAPH_BASE}/${igAccountId}/media`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        image_url: imageUrl,
-        caption,
-        access_token: pageToken,
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${pageToken}`,
+      },
+      body: JSON.stringify({ image_url: imageUrl, caption }),
     });
     if (!containerRes.ok) {
       const err = await containerRes.text().catch(() => '');
@@ -147,11 +149,11 @@ export class MetaStrategy extends BasePublisherStrategy {
       `${GRAPH_BASE}/${igAccountId}/media_publish`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          creation_id: container.id,
-          access_token: pageToken,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${pageToken}`,
+        },
+        body: JSON.stringify({ creation_id: container.id }),
       },
     );
     if (!publishRes.ok) {

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { Play, X } from 'lucide-react';
 
-const DEMO_VIDEO_ID = 'dQw4w9WgXcQ';
+const DEMO_VIDEO_ID = process.env.NEXT_PUBLIC_DEMO_VIDEO_ID ?? '';
 
 export function WatchDemoButton() {
   const [open, setOpen] = useState(false);
+
+  if (!DEMO_VIDEO_ID) return null;
 
   return (
     <>
