@@ -113,6 +113,15 @@ export function LoginForm() {
             required
           />
 
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-[#1d4e8a] hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           {state.error && (
             <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {state.error}

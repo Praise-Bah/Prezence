@@ -59,6 +59,13 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
       await this.usersService.updatePlan(userId, plan);
       try {
         await this.notificationService.sendPaymentApproved(userId, plan);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'billing',
+          title: 'Subscription active!',
+          body: `Your ${plan} plan is now active.`,
+          actionUrl: '/billing',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue payment_approved notification for user ${userId}: ${String(notifyErr)}`,
@@ -72,6 +79,13 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
       await this.usersService.updatePlan(userId, plan);
       try {
         await this.notificationService.sendPaymentProvisional(userId, plan);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'billing',
+          title: 'Payment received — verifying',
+          body: 'We received your payment screenshot and granted provisional access while we verify it.',
+          actionUrl: '/billing',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue payment_provisional notification for user ${userId}: ${String(notifyErr)}`,
@@ -87,6 +101,13 @@ export class ScreenshotScreeningProcessor extends WorkerHost {
           userId,
           result.rejection_reason ?? 'Screenshot could not be verified',
         );
+        await this.notificationService.createNotification({
+          userId,
+          type: 'billing',
+          title: 'Payment not verified',
+          body: 'Your payment could not be verified. Please try again with a clearer screenshot.',
+          actionUrl: '/billing',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue payment_rejected notification for user ${userId}: ${String(notifyErr)}`,

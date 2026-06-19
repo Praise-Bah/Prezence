@@ -8,6 +8,7 @@ import type {
   PlatformPublishJobData,
   SupportedPlatform,
 } from '@prezence/types';
+import { EventsGateway } from '../../events';
 import { NotificationService } from '../../notification';
 import { AutomationJobEntity } from '../entities/automation-job.entity';
 import { PlatformConnection } from '../entities/platform-connection.entity';
@@ -29,6 +30,7 @@ export class AutomationProcessor extends WorkerHost {
     private readonly githubStrategy: GithubStrategy,
     private readonly l3aStrategy: L3aPlaywrightStrategy,
     private readonly notificationService: NotificationService,
+    private readonly eventsGateway: EventsGateway,
   ) {
     super();
   }
@@ -41,6 +43,12 @@ export class AutomationProcessor extends WorkerHost {
     );
 
     await this.jobRepo.update(automationJobId, { status: 'running' });
+    this.eventsGateway.emitJobUpdate(userId, {
+      jobId: automationJobId,
+      type: 'automation',
+      platform,
+      status: 'running',
+    });
 
     try {
       const connection = await this.connectionRepo.findOne({
@@ -73,8 +81,22 @@ export class AutomationProcessor extends WorkerHost {
         `Automation job ${String(job.id)} completed for ${platform}`,
       );
 
+      this.eventsGateway.emitJobUpdate(userId, {
+        jobId: automationJobId,
+        type: 'automation',
+        platform,
+        status: 'completed',
+      });
+
       try {
         await this.notificationService.sendContentReady(userId, platform, 100);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'automation',
+          title: 'Profiles updated',
+          body: `Your ${platform} profile has been updated.`,
+          actionUrl: '/platforms',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,
@@ -88,8 +110,23 @@ export class AutomationProcessor extends WorkerHost {
         completedAt: new Date(),
       });
 
+      this.eventsGateway.emitJobUpdate(userId, {
+        jobId: automationJobId,
+        type: 'automation',
+        platform,
+        status: 'failed',
+        errorMessage: message,
+      });
+
       try {
         await this.notificationService.sendContentFailed(userId, platform);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'automation',
+          title: 'Update failed',
+          body: `Your ${platform} profile update failed. Please retry.`,
+          actionUrl: '/platforms',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,

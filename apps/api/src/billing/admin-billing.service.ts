@@ -9,6 +9,7 @@ import { SubscriptionRequest } from './entities/subscription-request.entity';
 import { PaymentEvent } from './entities/payment-event.entity';
 import type { ReviewSubmissionDto } from './dto/review-submission.dto';
 import { UsersService } from '../auth';
+import { NotificationService } from '../notification';
 
 @Injectable()
 export class AdminBillingService {
@@ -18,6 +19,7 @@ export class AdminBillingService {
     @InjectRepository(PaymentEvent)
     private readonly eventRepo: Repository<PaymentEvent>,
     private readonly usersService: UsersService,
+    private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -67,6 +69,15 @@ export class AdminBillingService {
           payload: { reviewedBy: reviewerId, notes: dto.adminNotes },
         }),
       );
+      this.notificationService
+        .createNotification({
+          userId: request.userId,
+          type: 'billing',
+          title: 'Subscription active!',
+          body: `Your ${request.plan} plan has been confirmed by our team.`,
+          actionUrl: '/billing',
+        })
+        .catch(() => undefined);
       return { message: `Approved — user upgraded to ${request.plan}.` };
     }
 
@@ -100,6 +111,15 @@ export class AdminBillingService {
         }),
       );
     });
+    this.notificationService
+      .createNotification({
+        userId: request.userId,
+        type: 'billing',
+        title: 'Payment not verified',
+        body: 'Our team could not verify your payment. Please submit a new screenshot.',
+        actionUrl: '/billing',
+      })
+      .catch(() => undefined);
     return { message: 'Submission rejected.' };
   }
 }

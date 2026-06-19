@@ -3,12 +3,16 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { ContentModule } from '../content';
+import { EventsModule } from '../events';
 import { NotificationModule } from '../notification';
+import { RedisModule } from '../redis';
 import { AutomationJobEntity } from './entities/automation-job.entity';
 import { PlatformConnection } from './entities/platform-connection.entity';
 import { AutomationProcessor } from './jobs/automation.processor';
+import { OAuthService } from './services/oauth.service';
 import { ProxyService } from './services/proxy.service';
 import { TokenVaultService } from './services/token-vault.service';
+import { FiverrStrategy } from './strategies/fiverr.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
 import { L3aPlaywrightStrategy } from './strategies/l3a-playwright.strategy';
 import { IntegrationController } from './integration.controller';
@@ -19,13 +23,17 @@ import { IntegrationService } from './integration.service';
     TypeOrmModule.forFeature([PlatformConnection, AutomationJobEntity]),
     BullModule.registerQueue({ name: QUEUE_NAMES.automation }),
     ContentModule,
+    EventsModule,
     NotificationModule,
+    RedisModule,
   ],
   controllers: [IntegrationController],
   providers: [
     IntegrationService,
+    OAuthService,
     TokenVaultService,
     ProxyService,
+    FiverrStrategy,
     GithubStrategy,
     L3aPlaywrightStrategy,
     AutomationProcessor,

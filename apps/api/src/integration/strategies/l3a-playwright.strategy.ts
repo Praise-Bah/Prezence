@@ -1,20 +1,28 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
 import { BasePublisherStrategy } from './base-publisher.strategy';
+import { FiverrStrategy } from './fiverr.strategy';
 
-// Playwright-based browser automation for platforms without accessible APIs.
-// Requires SMARTPROXY_HOST/USERNAME/PASSWORD env vars and the playwright package.
-// Stub implementation — concrete platform scripts are Phase 2.
+// Browser-automation router for L3A platforms (no accessible APIs).
+// Fiverr is fully implemented; all other L3A platforms are Phase 3.
 @Injectable()
 export class L3aPlaywrightStrategy extends BasePublisherStrategy {
+  constructor(private readonly fiverrStrategy: FiverrStrategy) {
+    super();
+  }
+
   publish(
-    _accessToken: string,
-    _content: Record<string, string>,
+    accessToken: string,
+    content: Record<string, string>,
     platform: SupportedPlatform,
   ): Promise<string | null> {
+    if (platform === 'fiverr') {
+      return this.fiverrStrategy.publish(accessToken, content, platform);
+    }
+
     throw new ServiceUnavailableException(
       `L3A browser automation for ${platform} is not yet available. ` +
-        'Connect via GitHub (L1) or check back after the Phase 2 release.',
+        'Check back after the Phase 3 release.',
     );
   }
 }
