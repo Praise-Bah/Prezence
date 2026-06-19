@@ -29,7 +29,9 @@ const redisKv = new Map<string, string>();
 
 function findUser(where: Partial<User>): User | undefined {
   return [...users.values()].find((u) =>
-    Object.entries(where).every(([k, v]) => (u as Record<string, unknown>)[k] === v),
+    Object.entries(where).every(
+      ([k, v]) => (u as unknown as Record<string, unknown>)[k] === v,
+    ),
   );
 }
 
@@ -47,9 +49,17 @@ function makeUserRepo() {
     save: jest.fn((entity: Partial<User>) => {
       const id = entity.id ?? `user-${Date.now()}`;
       const row = {
-        id, role: 'user', plan: 'free', countryCode: 'CM', language: 'en',
-        name: null, bio: null, location: null, timezone: 'Africa/Douala',
-        emailNotifications: true, pushNotifications: true,
+        id,
+        role: 'user',
+        plan: 'free',
+        countryCode: 'CM',
+        language: 'en',
+        name: null,
+        bio: null,
+        location: null,
+        timezone: 'Africa/Douala',
+        emailNotifications: true,
+        pushNotifications: true,
         ...entity,
       } as unknown as User;
       users.set(id, row);
@@ -67,19 +77,26 @@ function makeTokenRepo() {
   return {
     findOne: jest.fn(({ where }: { where: Partial<RefreshToken> }) => {
       const match = [...tokens.values()].find((t) =>
-        Object.entries(where).every(([k, v]) => (t as Record<string, unknown>)[k] === v),
+        Object.entries(where).every(
+          ([k, v]) => (t as unknown as Record<string, unknown>)[k] === v,
+        ),
       );
       return Promise.resolve(match ?? null);
     }),
     create: jest.fn((d: Partial<RefreshToken>) => d as RefreshToken),
     save: jest.fn((entity: Partial<RefreshToken>) => {
       const id = entity.id ?? `tok-${Date.now()}`;
-      const row = { revokedAt: null, replacedBy: null, ...entity, id } as unknown as RefreshToken;
+      const row = {
+        revokedAt: null,
+        replacedBy: null,
+        ...entity,
+        id,
+      } as unknown as RefreshToken;
       tokens.set(id, row);
       return Promise.resolve(row);
     }),
     update: jest.fn((_criteria: unknown, data: Partial<RefreshToken>) => {
-      tokens.forEach((t, k) => tokens.set(k, { ...t, ...data } as RefreshToken));
+      tokens.forEach((t, k) => tokens.set(k, { ...t, ...data }));
       return Promise.resolve({ affected: tokens.size });
     }),
   };
@@ -89,14 +106,22 @@ function makeResetTokenRepo() {
   return {
     findOne: jest.fn(({ where }: { where: Partial<PasswordResetToken> }) => {
       const match = [...resetTokens.values()].find((t) =>
-        Object.entries(where).every(([k, v]) => (t as Record<string, unknown>)[k] === v),
+        Object.entries(where).every(
+          ([k, v]) => (t as unknown as Record<string, unknown>)[k] === v,
+        ),
       );
       return Promise.resolve(match ?? null);
     }),
-    create: jest.fn((d: Partial<PasswordResetToken>) => d as PasswordResetToken),
+    create: jest.fn(
+      (d: Partial<PasswordResetToken>) => d as PasswordResetToken,
+    ),
     save: jest.fn((entity: Partial<PasswordResetToken>) => {
       const id = entity.id ?? `rst-${Date.now()}`;
-      const row = { usedAt: null, ...entity, id } as unknown as PasswordResetToken;
+      const row = {
+        usedAt: null,
+        ...entity,
+        id,
+      } as unknown as PasswordResetToken;
       resetTokens.set(id, row);
       return Promise.resolve(row);
     }),
@@ -107,8 +132,14 @@ function makeResetTokenRepo() {
 function makeRedis() {
   return {
     get: jest.fn((k: string) => Promise.resolve(redisKv.get(k) ?? null)),
-    set: jest.fn((k: string, v: string) => { redisKv.set(k, v); return Promise.resolve('OK'); }),
-    del: jest.fn((...keys: string[]) => { keys.forEach((k) => redisKv.delete(k)); return Promise.resolve(keys.length); }),
+    set: jest.fn((k: string, v: string) => {
+      redisKv.set(k, v);
+      return Promise.resolve('OK');
+    }),
+    del: jest.fn((...keys: string[]) => {
+      keys.forEach((k) => redisKv.delete(k));
+      return Promise.resolve(keys.length);
+    }),
     incr: jest.fn(() => Promise.resolve(1)),
     expire: jest.fn(() => Promise.resolve(1)),
     // Used by LockoutService and RateLimitService — always returns 1 (below any threshold)
@@ -124,8 +155,8 @@ const passthroughGuard = { canActivate: () => true };
   imports: [AuthModule],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useValue: passthroughGuard },  // RolesGuard — always allow in tests
-    { provide: APP_GUARD, useValue: passthroughGuard },  // RateLimitGuard — always allow in tests
+    { provide: APP_GUARD, useValue: passthroughGuard }, // RolesGuard — always allow in tests
+    { provide: APP_GUARD, useValue: passthroughGuard }, // RateLimitGuard — always allow in tests
   ],
 })
 class TestAppModule {}
@@ -156,17 +187,22 @@ describe('Auth journey (E2E)', () => {
         TestAppModule,
       ],
     })
-      .overrideProvider(getRepositoryToken(User)).useFactory({ factory: makeUserRepo })
-      .overrideProvider(getRepositoryToken(RefreshToken)).useFactory({ factory: makeTokenRepo })
-      .overrideProvider(getRepositoryToken(PasswordResetToken)).useFactory({ factory: makeResetTokenRepo })
-      .overrideProvider(REDIS_CLIENT).useFactory({ factory: makeRedis })
-      .overrideProvider(getQueueToken(QUEUE_NAMES.email)).useValue({ add: jest.fn().mockResolvedValue({ id: 'q1' }) })
+      .overrideProvider(getRepositoryToken(User))
+      .useFactory({ factory: makeUserRepo })
+      .overrideProvider(getRepositoryToken(RefreshToken))
+      .useFactory({ factory: makeTokenRepo })
+      .overrideProvider(getRepositoryToken(PasswordResetToken))
+      .useFactory({ factory: makeResetTokenRepo })
+      .overrideProvider(REDIS_CLIENT)
+      .useFactory({ factory: makeRedis })
+      .overrideProvider(getQueueToken(QUEUE_NAMES.email))
+      .useValue({ add: jest.fn().mockResolvedValue({ id: 'q1' }) })
       .compile();
 
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
-    server = app.getHttpServer() as App;
+    server = app.getHttpServer();
   });
 
   afterAll(async () => {
@@ -191,11 +227,17 @@ describe('Auth journey (E2E)', () => {
   });
 
   it('POST /auth/register → 409 when email already taken', async () => {
-    await request(server).post('/auth/register').send({ email, password }).expect(409);
+    await request(server)
+      .post('/auth/register')
+      .send({ email, password })
+      .expect(409);
   });
 
   it('POST /auth/register → 400 with invalid payload', async () => {
-    await request(server).post('/auth/register').send({ email: 'not-an-email' }).expect(400);
+    await request(server)
+      .post('/auth/register')
+      .send({ email: 'not-an-email' })
+      .expect(400);
   });
 
   it('GET /auth/me → 401 without token', async () => {
