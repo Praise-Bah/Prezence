@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { requireUser } from '../../../lib/auth';
-import { api, ApiError } from '../../../lib/api';
+import { api } from '../../../lib/api';
 import { Topbar } from '../../../components/layout/topbar';
 import {
   mapApiHealthCheck,

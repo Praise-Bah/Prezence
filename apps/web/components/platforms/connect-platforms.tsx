@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface ConnectPlatformsProps {
@@ -22,32 +22,41 @@ const OAUTH_PLATFORMS = [
   },
 ] as const;
 
+function resolveNotice(
+  connected: string | null,
+  error: string | null,
+): { type: 'success' | 'error'; message: string } | null {
+  if (connected) {
+    const label = connected === 'facebook' ? 'Facebook / Instagram' : 'LinkedIn';
+    return { type: 'success', message: `${label} connected successfully.` };
+  }
+  if (error) {
+    return {
+      type: 'error',
+      message: error.endsWith('_oauth_denied')
+        ? 'OAuth authorization was cancelled.'
+        : 'Connection failed. Please try again.',
+    };
+  }
+  return null;
+}
+
 export function ConnectPlatforms({ connectedPlatforms }: ConnectPlatformsProps) {
   const searchParams = useSearchParams();
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(
-    null,
+
+  const initialNotice = useMemo(
+    () => resolveNotice(searchParams.get('connected'), searchParams.get('error')),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
+  const [notice, setNotice] = useState(initialNotice);
+
   useEffect(() => {
-    const connected = searchParams.get('connected');
-    const error = searchParams.get('error');
-
-    if (connected) {
-      const label = connected === 'facebook' ? 'Facebook / Instagram' : 'LinkedIn';
-      setNotice({ type: 'success', message: `${label} connected successfully.` });
-    } else if (error) {
-      const isdenied = error.endsWith('_oauth_denied');
-      setNotice({
-        type: 'error',
-        message: isdenied
-          ? 'OAuth authorization was cancelled.'
-          : 'Connection failed. Please try again.',
-      });
-    }
-
+    if (!notice) return;
     const t = setTimeout(() => setNotice(null), 5000);
     return () => clearTimeout(t);
-  }, [searchParams]);
+  }, [notice]);
 
   return (
     <div className="mt-8">

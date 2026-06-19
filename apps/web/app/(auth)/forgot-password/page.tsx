@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import { forgotPasswordAction } from '../../../lib/actions/auth.actions';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
