@@ -4,15 +4,18 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { RateLimit } from './decorators/rate-limit.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import type { AuthenticatedUser } from './jwt-payload.interface';
 import { UsersService } from './users.service';
 
@@ -62,5 +65,22 @@ export class AuthController {
   async me(@CurrentUser() user: AuthenticatedUser) {
     const fullUser = await this.usersService.findById(user.userId);
     return fullUser ? this.authService.sanitizeUser(fullUser) : null;
+  }
+
+  @Patch('me')
+  async updateMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.authService.updateProfile(user.userId, dto);
+  }
+
+  @Patch('me/password')
+  @HttpCode(HttpStatus.OK)
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(user.userId, dto);
   }
 }

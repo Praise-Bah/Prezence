@@ -38,6 +38,24 @@ export class User {
   @Column({ type: 'enum', enum: ['en', 'fr', 'camfranglais'], default: 'en' })
   language!: 'en' | 'fr' | 'camfranglais';
 
+  @Column({ nullable: true, default: null })
+  name!: string | null;
+
+  @Column({ nullable: true, default: null })
+  bio!: string | null;
+
+  @Column({ nullable: true, default: null })
+  location!: string | null;
+
+  @Column({ nullable: true, name: 'timezone', default: 'Africa/Douala' })
+  timezone!: string | null;
+
+  @Column({ name: 'email_notifications', default: true })
+  emailNotifications!: boolean;
+
+  @Column({ name: 'push_notifications', default: true })
+  pushNotifications!: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

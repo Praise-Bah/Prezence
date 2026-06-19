@@ -13,8 +13,10 @@ import * as bcrypt from 'bcrypt';
 import type { Queue } from 'bullmq';
 import { IsNull, Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import type { UpdateUserDto } from './dto/update-user.dto';
 import { RefreshToken } from './entities/refresh-token.entity';
 import type { User } from './entities/user.entity';
 import type { JwtPayload, RefreshTokenPayload } from './jwt-payload.interface';
@@ -40,6 +42,12 @@ export interface SanitizedUser {
   plan: string;
   countryCode: string;
   language: string;
+  name: string | null;
+  bio: string | null;
+  location: string | null;
+  timezone: string | null;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
 }
 
 @Injectable()
@@ -65,6 +73,12 @@ export class AuthService {
       plan: user.plan,
       countryCode: user.countryCode,
       language: user.language,
+      name: user.name,
+      bio: user.bio,
+      location: user.location,
+      timezone: user.timezone,
+      emailNotifications: user.emailNotifications,
+      pushNotifications: user.pushNotifications,
     };
   }
 
@@ -181,6 +195,34 @@ export class AuthService {
       { userId, revokedAt: IsNull() },
       { revokedAt: new Date() },
     );
+  }
+
+  async updateProfile(
+    userId: string,
+    dto: UpdateUserDto,
+  ): Promise<SanitizedUser> {
+    const updated = await this.usersService.updateProfile(userId, dto);
+    return this.sanitizeUser(updated);
+  }
+
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const matches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!matches) throw new UnauthorizedException('Current password is incorrect');
+
+    const newHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
+    await this.usersService.updatePasswordHash(userId, newHash);
+    await this.refreshTokenRepository.update(
+      { userId, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+
+    return { message: 'Password changed. Please log in again.' };
   }
 
   private hashToken(token: string): string {

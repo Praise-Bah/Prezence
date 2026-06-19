@@ -26,6 +26,12 @@ const mockUser: User = {
   plan: 'free',
   countryCode: 'CM',
   language: 'en',
+  name: null,
+  bio: null,
+  location: null,
+  timezone: 'Africa/Douala',
+  emailNotifications: true,
+  pushNotifications: true,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -309,6 +315,80 @@ describe('AuthService', () => {
         email: 'a@b.com',
         role: 'user',
       });
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('updates only provided fields and returns sanitized user', async () => {
+      const updated = { ...mockUser, name: 'Praise' };
+      usersService.updateProfile = jest.fn().mockResolvedValue(updated);
+
+      const result = await service.updateProfile('user-uuid', { name: 'Praise' });
+
+      expect(usersService.updateProfile).toHaveBeenCalledWith('user-uuid', { name: 'Praise' });
+      expect(result.name).toBe('Praise');
+      expect(result).not.toHaveProperty('passwordHash');
+    });
+
+    it('does not overwrite fields not present in the DTO', async () => {
+      const unchanged = { ...mockUser, name: 'Existing Name', bio: 'My bio' };
+      usersService.updateProfile = jest.fn().mockResolvedValue(unchanged);
+
+      const result = await service.updateProfile('user-uuid', { name: 'Praise' });
+
+      expect(usersService.updateProfile).toHaveBeenCalledWith('user-uuid', { name: 'Praise' });
+      expect(result.bio).toBe('My bio');
+    });
+  });
+
+  describe('changePassword', () => {
+    it('succeeds with correct current password and invalidates all sessions', async () => {
+      usersService.findById.mockResolvedValue(mockUser);
+      usersService.updatePasswordHash = jest.fn().mockResolvedValue(undefined);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
+
+      const result = await service.changePassword('user-uuid', {
+        currentPassword: 'OldPass1!',
+        newPassword: 'NewPass1!',
+      });
+
+      expect(result.message).toMatch(/log in again/i);
+      expect(usersService.updatePasswordHash).toHaveBeenCalledWith('user-uuid', 'new-hashed');
+      expect(refreshTokenRepo.update).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'user-uuid' }),
+        { revokedAt: expect.any(Date) },
+      );
+    });
+
+    it('throws UnauthorizedException when current password is wrong', async () => {
+      usersService.findById.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.changePassword('user-uuid', {
+          currentPassword: 'WrongPass1!',
+          newPassword: 'NewPass1!',
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('invalidates all refresh tokens after password change', async () => {
+      usersService.findById.mockResolvedValue(mockUser);
+      usersService.updatePasswordHash = jest.fn().mockResolvedValue(undefined);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
+
+      await service.changePassword('user-uuid', {
+        currentPassword: 'OldPass1!',
+        newPassword: 'NewPass1!',
+      });
+
+      // All active sessions should be revoked
+      expect(refreshTokenRepo.update).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'user-uuid' }),
+        { revokedAt: expect.any(Date) },
+      );
     });
   });
 });

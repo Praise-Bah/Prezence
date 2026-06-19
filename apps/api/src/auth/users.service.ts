@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import type { SubscriptionPlan } from '@prezence/types';
+import type { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
 export interface CreateUserInput {
@@ -26,6 +27,22 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
+  async updateProfile(userId: string, dto: UpdateUserDto): Promise<User> {
+    const patch: Partial<User> = {};
+    if (dto.name !== undefined) patch.name = dto.name;
+    if (dto.bio !== undefined) patch.bio = dto.bio;
+    if (dto.location !== undefined) patch.location = dto.location;
+    if (dto.language !== undefined) patch.language = dto.language;
+    if (dto.timezone !== undefined) patch.timezone = dto.timezone;
+    if (dto.email_notifications !== undefined)
+      patch.emailNotifications = dto.email_notifications;
+    if (dto.push_notifications !== undefined)
+      patch.pushNotifications = dto.push_notifications;
+
+    await this.usersRepository.update(userId, patch);
+    return this.usersRepository.findOneOrFail({ where: { id: userId } });
+  }
+
   async updatePlan(
     userId: string,
     plan: SubscriptionPlan,
@@ -33,6 +50,10 @@ export class UsersService {
   ): Promise<void> {
     const repository = manager?.getRepository(User) ?? this.usersRepository;
     await repository.update(userId, { plan });
+  }
+
+  async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
+    await this.usersRepository.update(userId, { passwordHash });
   }
 
   async create(input: CreateUserInput): Promise<User> {
