@@ -6,14 +6,12 @@ import Link from 'next/link';
 import { registerAction, type AuthState } from '../../lib/actions/auth.actions';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { GoogleSignInButton, SocialOAuthRow } from './social-oauth-row';
 
 const initial: AuthState = {};
 
 const AUTH_ASSETS = {
   logoFull: '/assets/brand/shared-logo-full@343x90.png',
-  google: '/assets/social/shared-google@24x24.svg',
-  apple: '/assets/social/shared-apple@24x24.svg',
-  facebook: '/assets/social/shared-facebook@24x24.svg',
 } as const;
 
 const languages = [
@@ -21,31 +19,6 @@ const languages = [
   { value: 'fr', label: 'Français' },
   { value: 'camfranglais', label: 'Camfranglais' },
 ];
-
-function SocialOAuthRow() {
-  return (
-    <div className="flex items-center justify-center gap-3">
-      {(
-        [
-          { src: AUTH_ASSETS.google, label: 'Google' },
-          { src: AUTH_ASSETS.apple, label: 'Apple' },
-          { src: AUTH_ASSETS.facebook, label: 'Facebook' },
-        ] as const
-      ).map((item) => (
-        <button
-          key={item.label}
-          type="button"
-          disabled
-          aria-label={`Continue with ${item.label}`}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#cdd5e9] bg-white shadow-sm transition hover:bg-[#f5f7fc] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.src} alt="" width={24} height={24} />
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export function RegisterForm() {
   const [state, action, isPending] = useActionState(registerAction, initial);
@@ -81,17 +54,7 @@ export function RegisterForm() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="google"
-          size="xl"
-          disabled
-          className="mx-auto w-full max-w-[345px] font-medium"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={AUTH_ASSETS.google} alt="" width={24} height={24} />
-          Log In with Google
-        </Button>
+        <GoogleSignInButton />
 
         <SocialOAuthRow />
 

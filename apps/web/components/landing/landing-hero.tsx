@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Play, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, Sparkles, Star } from 'lucide-react';
 import { LANDING_ASSETS } from '../../lib/landing-assets';
+import { WatchDemoButton } from './demo-modal';
 
 export function LandingNav() {
   return (
@@ -99,13 +100,7 @@ export function LandingHero() {
               Start for free
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-[14px] border border-white/20 bg-white/10 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-white/15"
-            >
-              <Play className="h-4 w-4 fill-white" />
-              Watch demo
-            </button>
+            <WatchDemoButton />
           </div>
 
           <p className="mt-4 text-base text-white">

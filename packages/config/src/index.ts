@@ -43,6 +43,7 @@ export const QUEUE_NAMES = {
   email: 'email-notifications',
   screenshot_screening: 'screenshot-screening',  // MVP payment processing
   webhook_retry: 'webhook-retry',
+  content_schedule: 'content-schedule',
 } as const;
 
 // ─── Plan prices ─────────────────────────────────────────────────────────────

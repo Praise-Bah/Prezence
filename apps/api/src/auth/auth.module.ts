@@ -14,6 +14,8 @@ import { User } from './entities/user.entity';
 import { LockoutService } from './lockout.service';
 import { RateLimitService } from './rate-limit.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 import { UsersService } from './users.service';
 
 @Module({
@@ -38,6 +40,8 @@ import { UsersService } from './users.service';
     LockoutService,
     RateLimitService,
     JwtStrategy,
+    GoogleStrategy,
+    FacebookStrategy,
   ],
   exports: [AuthService, UsersService],
 })

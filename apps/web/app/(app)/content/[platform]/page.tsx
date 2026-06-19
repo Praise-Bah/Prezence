@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { requireUser } from '../../../../lib/auth';
 import { api, ApiError } from '../../../../lib/api';
+import { getScheduledPostsAction } from '../../../../lib/actions/content.actions';
+import type { ScheduledPost } from '../../../../lib/actions/content.actions';
 import { Topbar } from '../../../../components/layout/topbar';
 import { ContentViewer } from '../../../../components/content/content-viewer';
 import { PlatformIcon } from '../../../../components/content/platform-icon';
 import { formatPlatformName } from '../../../../lib/utils';
+import type { SupportedPlatform } from '@prezence/types';
 
 const SUPPORTED_PLATFORMS = [
   'linkedin', 'github', 'instagram', 'facebook',
@@ -33,19 +36,29 @@ export default async function ContentPage({ params }: { params: Params }) {
   let content: Record<string, string> | null = null;
   let cached = false;
   let isNotFound = false;
+  let scheduledPosts: ScheduledPost[] = [];
 
-  try {
-    const data = await api.get<{ content: Record<string, string>; cached: boolean }>(
-      `/content/${platform}`,
-    );
-    content = data.content;
-    cached = data.cached;
-  } catch (err) {
+  const [contentResult, scheduleResult] = await Promise.allSettled([
+    api.get<{ content: Record<string, string>; cached: boolean }>(`/content/${platform}`),
+    getScheduledPostsAction(),
+  ]);
+
+  if (contentResult.status === 'fulfilled') {
+    content = contentResult.value.content;
+    cached = contentResult.value.cached;
+  } else {
+    const err = contentResult.reason as unknown;
     if (err instanceof ApiError && err.status === 404) {
       isNotFound = true;
     } else {
       throw err;
     }
+  }
+
+  if (scheduleResult.status === 'fulfilled' && !('error' in scheduleResult.value)) {
+    scheduledPosts = (scheduleResult.value as ScheduledPost[]).filter(
+      (p) => p.platform === (platform as SupportedPlatform),
+    );
   }
 
   const title = `${formatPlatformName(platform)} Profile`;
@@ -84,7 +97,13 @@ export default async function ContentPage({ params }: { params: Params }) {
       <Topbar user={user} title={title} />
       <div className="flex-1 overflow-y-auto px-5 py-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <ContentViewer platform={platform} content={content} cached={cached} />
+          <ContentViewer
+            platform={platform}
+            content={content}
+            cached={cached}
+            userPlan={user.plan}
+            initialScheduledPosts={scheduledPosts}
+          />
         </div>
       </div>
     </div>
