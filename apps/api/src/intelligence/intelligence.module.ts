@@ -8,6 +8,7 @@ import { RedisModule } from '../redis';
 import { IntelligenceController } from './intelligence.controller';
 import { IntelligenceService } from './intelligence.service';
 import { ContentGenerationProcessor } from './jobs/content-generation.processor';
+import { MarketScoreProcessor } from './jobs/market-score.processor';
 import { AiEmbedding } from './entities/ai-embedding.entity';
 import { InterviewResponse } from './entities/interview-response.entity';
 import { MarketScore } from './entities/market-score.entity';
@@ -22,7 +23,10 @@ import { EmbeddingService } from './services/embedding.service';
       MarketScore,
       ProfileData,
     ]),
-    BullModule.registerQueue({ name: QUEUE_NAMES.content_generation }),
+    BullModule.registerQueue(
+      { name: QUEUE_NAMES.content_generation },
+      { name: QUEUE_NAMES.mfs_compute },
+    ),
     RedisModule,
     AiModule,
     NotificationModule,
@@ -32,6 +36,7 @@ import { EmbeddingService } from './services/embedding.service';
     IntelligenceService,
     EmbeddingService,
     ContentGenerationProcessor,
+    MarketScoreProcessor,
   ],
   exports: [IntelligenceService],
 })
