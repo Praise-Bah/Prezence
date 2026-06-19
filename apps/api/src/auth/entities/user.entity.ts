@@ -32,8 +32,8 @@ export class User {
   })
   plan!: SubscriptionPlan;
 
-  @Column({ name: 'country_code', default: 'CM' })
-  countryCode!: string;
+  @Column({ name: 'country_code', type: 'text', nullable: true, default: null })
+  countryCode!: string | null;
 
   @Column({ type: 'enum', enum: ['en', 'fr', 'camfranglais'], default: 'en' })
   language!: 'en' | 'fr' | 'camfranglais';

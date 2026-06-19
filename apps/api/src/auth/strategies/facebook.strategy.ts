@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-facebook';
 import type { Profile } from 'passport-facebook';
+import type { StateStore } from 'passport-oauth2';
 import type { User } from '../entities/user.entity';
+import { OAuthStateStore } from '../oauth-state.store';
 import { UsersService } from '../users.service';
 
 @Injectable()
@@ -11,6 +13,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
   constructor(
     private readonly usersService: UsersService,
     config: ConfigService,
+    oauthStateStore: OAuthStateStore,
   ) {
     super({
       clientID: config.get<string>('FACEBOOK_APP_ID', 'not-configured'),
@@ -18,6 +21,8 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       callbackURL: `${config.get<string>('API_URL', 'http://localhost:3001')}/auth/callback/facebook`,
       profileFields: ['id', 'emails', 'displayName'],
       scope: ['email'],
+      state: true,
+      store: oauthStateStore as unknown as StateStore,
     });
   }
 

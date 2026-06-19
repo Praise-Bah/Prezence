@@ -92,7 +92,7 @@ export class UsersService {
         email: params.email,
         name: params.name,
         passwordHash,
-        countryCode: params.countryCode ?? 'CM',
+        countryCode: params.countryCode ?? null,
         language: 'en',
       }),
     );

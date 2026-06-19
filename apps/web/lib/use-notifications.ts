@@ -91,19 +91,20 @@ export function useNotifications(initialNotifications: Notification[]) {
   };
 
   const markAllRead = (): void => {
-    const idsToRevert = notifications
-      .filter((n) => !n.read)
-      .map((n) => n.id);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    const revertSet = new Set<string>();
+    setNotifications((prev) => {
+      for (const n of prev) {
+        if (!n.read) revertSet.add(n.id);
+      }
+      return prev.map((n) => ({ ...n, read: true }));
+    });
     void fetch('/api/notifications/read-all', { method: 'PATCH' })
       .then((res) => {
         if (!res.ok) throw new Error('HTTP error');
       })
       .catch(() => {
         setNotifications((prev) =>
-          prev.map((n) =>
-            idsToRevert.includes(n.id) ? { ...n, read: false } : n,
-          ),
+          prev.map((n) => (revertSet.has(n.id) ? { ...n, read: false } : n)),
         );
       });
   };

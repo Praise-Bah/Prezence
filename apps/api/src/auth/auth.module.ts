@@ -16,6 +16,7 @@ import { RateLimitService } from './rate-limit.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
+import { OAuthStateStore } from './oauth-state.store';
 import { UsersService } from './users.service';
 
 @Module({
@@ -42,6 +43,7 @@ import { UsersService } from './users.service';
     JwtStrategy,
     GoogleStrategy,
     FacebookStrategy,
+    OAuthStateStore,
   ],
   exports: [AuthService, UsersService],
 })

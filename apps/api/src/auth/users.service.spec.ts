@@ -94,4 +94,29 @@ describe('UsersService', () => {
       });
     });
   });
+
+  describe('findOrCreateSocialUser', () => {
+    it('does not default countryCode to CM for new social sign-ups', async () => {
+      const created = {
+        email: 'social@example.com',
+        passwordHash: 'hash',
+        countryCode: null,
+      } as User;
+      repository.findOne.mockResolvedValue(null);
+      repository.create.mockReturnValue(created);
+      repository.save.mockResolvedValue({ ...created, id: '1' });
+
+      await service.findOrCreateSocialUser({
+        email: 'social@example.com',
+        name: 'Social User',
+      });
+
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'social@example.com',
+          countryCode: null,
+        }),
+      );
+    });
+  });
 });

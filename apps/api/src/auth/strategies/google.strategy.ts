@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import type { Profile } from 'passport-google-oauth20';
+import type { StateStore } from 'passport-oauth2';
 import type { User } from '../entities/user.entity';
+import { OAuthStateStore } from '../oauth-state.store';
 import { UsersService } from '../users.service';
 
 @Injectable()
@@ -11,6 +13,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
     private readonly usersService: UsersService,
     config: ConfigService,
+    oauthStateStore: OAuthStateStore,
   ) {
     super({
       clientID: config.get<string>('GOOGLE_CLIENT_ID', 'not-configured'),
@@ -20,6 +23,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       ),
       callbackURL: `${config.get<string>('API_URL', 'http://localhost:3001')}/auth/callback/google`,
       scope: ['email', 'profile'],
+      state: true,
+      store: oauthStateStore as unknown as StateStore,
     });
   }
 

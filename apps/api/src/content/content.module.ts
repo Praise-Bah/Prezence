@@ -5,8 +5,9 @@ import { QUEUE_NAMES } from '@prezence/config';
 import { AuthModule } from '../auth';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { RedisModule } from '../redis';
-// TODO: move AutomationJobEntity to a SharedModule — direct path import is intentional to avoid
-// circular dep (IntegrationModule already imports ContentModule via its barrel).
+// AutomationJobEntity: direct path import to avoid circular barrel cycle
+// (integration/index → integration.module → content/index → content.module → [integration barrel = cycle])
+// Long-term fix: move entity to a SharedModule.
 import { AutomationJobEntity } from '../integration/entities/automation-job.entity';
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
