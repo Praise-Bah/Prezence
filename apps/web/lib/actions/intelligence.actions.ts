@@ -1,11 +1,12 @@
 'use server';
 
-import { redirect } from 'next/navigation';
 import type { SupportedPlatform } from '@prezence/types';
 import { api, ApiError } from '../api';
 
 export interface InterviewState {
   error?: string;
+  jobId?: string;
+  platform?: string;
 }
 
 export async function submitInterviewAction(
@@ -30,18 +31,21 @@ export async function submitInterviewAction(
   const required = ['name', 'title', 'experience_years', 'skills', 'bio', 'achievements', 'looking_for', 'target_audience'];
   for (const field of required) {
     if (!answers[field as keyof typeof answers]) {
-      return { error: `Please fill in all required fields.` };
+      return { error: 'Please fill in all required fields.' };
     }
   }
 
   try {
-    await api.post('/intelligence/generate', { platform, language, answers });
+    const result = await api.post<{ jobId: string }>('/intelligence/generate', {
+      platform,
+      language,
+      answers,
+    });
+    return { jobId: result.jobId, platform };
   } catch (err) {
     if (err instanceof ApiError) return { error: err.message };
     return { error: 'Failed to submit interview. Please try again.' };
   }
-
-  redirect(`/content/${platform}`);
 }
 
 export async function regenerateAction(

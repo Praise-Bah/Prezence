@@ -1,7 +1,7 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { Job } from 'bullmq';
+import type { Job, Queue } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { Repository } from 'typeorm';
 import { CACHE_TTL, PLATFORM_CHAR_LIMITS, QUEUE_NAMES } from '@prezence/config';
@@ -11,12 +11,13 @@ import type {
   QaResult,
 } from '@prezence/types';
 import { AiUsageService, PromptRegistryService } from '../../ai';
+import { EventsGateway } from '../../events';
 import { REDIS_CLIENT } from '../../redis';
 import { NotificationService } from '../../notification';
 import { InterviewResponse } from '../entities/interview-response.entity';
-import { MarketScore } from '../entities/market-score.entity';
 import { ProfileData } from '../entities/profile-data.entity';
 import { EmbeddingService } from '../services/embedding.service';
+import type { MarketFitJobData } from './market-score.processor';
 
 function stripCodeFences(raw: string): string {
   return raw
@@ -34,12 +35,13 @@ export class ContentGenerationProcessor extends WorkerHost {
     private readonly interviewRepo: Repository<InterviewResponse>,
     @InjectRepository(ProfileData)
     private readonly profileRepo: Repository<ProfileData>,
-    @InjectRepository(MarketScore)
-    private readonly marketScoreRepo: Repository<MarketScore>,
     private readonly aiUsage: AiUsageService,
     private readonly promptRegistry: PromptRegistryService,
     private readonly embeddingService: EmbeddingService,
     private readonly notificationService: NotificationService,
+    private readonly eventsGateway: EventsGateway,
+    @InjectQueue(QUEUE_NAMES.mfs_compute)
+    private readonly mfsQueue: Queue<MarketFitJobData>,
     @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
   ) {
@@ -52,11 +54,38 @@ export class ContentGenerationProcessor extends WorkerHost {
       `Processing generation job ${job.id} — ${platform} for user ${userId}`,
     );
 
+    this.eventsGateway.emitJobUpdate(userId, {
+      jobId: String(job.id),
+      type: 'content_generation',
+      platform,
+      status: 'running',
+    });
+
     try {
       await this.run(job.data);
+      this.eventsGateway.emitJobUpdate(userId, {
+        jobId: String(job.id),
+        type: 'content_generation',
+        platform,
+        status: 'completed',
+      });
     } catch (err) {
+      this.eventsGateway.emitJobUpdate(userId, {
+        jobId: String(job.id),
+        type: 'content_generation',
+        platform,
+        status: 'failed',
+        errorMessage: err instanceof Error ? err.message : String(err),
+      });
       try {
         await this.notificationService.sendContentFailed(userId, platform);
+        await this.notificationService.createNotification({
+          userId,
+          type: 'profile',
+          title: 'Profile generation failed',
+          body: `We could not generate your ${platform} profiles. Please try again.`,
+          actionUrl: '/content',
+        });
       } catch (notifyErr) {
         this.logger.warn(
           `Failed to enqueue content_failed notification for user ${userId}: ${String(notifyErr)}`,
@@ -191,31 +220,17 @@ export class ContentGenerationProcessor extends WorkerHost {
       ['userId', 'platform', 'interviewVersion'],
     );
 
-    // 8. Compute and store market score
-    const completeness = this.computeCompleteness(generated.sections);
-    const keywordDensity = Math.min(
-      100,
-      (generated.keywords_used?.length ?? 0) * 10,
-    );
-    const marketDemand = 70; // static for MVP; Phase 2 will compute dynamically
-    const recency = 100;
-    const overallScore = Math.round(
-      (completeness + keywordDensity + marketDemand + recency) / 4,
-    );
-
-    await this.marketScoreRepo.upsert(
+    // 8. Enqueue market-fit score computation (runs in dedicated mfs-compute worker)
+    await this.mfsQueue.add(
+      'compute',
       {
         userId,
         platform,
-        score: overallScore,
-        completeness,
-        keywordDensity,
-        marketDemand,
-        recency,
-        recommendations: qa.suggestions ?? [],
-        computedAt: new Date(),
+        content: { ...generated.sections },
+        qualityScore: qa.quality_score,
+        keywordsUsed: generated.keywords_used ?? [],
       },
-      ['userId', 'platform'],
+      { attempts: 3, backoff: { type: 'exponential', delay: 10000 } },
     );
 
     // 9. Cache result with versioned key
@@ -233,6 +248,13 @@ export class ContentGenerationProcessor extends WorkerHost {
         platform,
         qa.quality_score,
       );
+      await this.notificationService.createNotification({
+        userId,
+        type: 'profile',
+        title: 'Profiles ready to review',
+        body: 'Your AI-generated profiles are ready.',
+        actionUrl: '/content',
+      });
     } catch (notifyErr) {
       this.logger.warn(
         `Failed to enqueue content_ready notification for user ${userId}: ${String(notifyErr)}`,
@@ -240,15 +262,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     }
 
     this.logger.log(
-      `Generation complete for job — quality: ${String(qa.quality_score)}, market: ${String(overallScore)}`,
+      `Generation complete for job — quality: ${String(qa.quality_score)}, market-fit score enqueued`,
     );
-  }
-
-  private computeCompleteness(sections: Record<string, string>): number {
-    const values = Object.values(sections).filter(
-      (v) => v && v.trim().length > 0,
-    );
-    const total = Math.max(Object.keys(sections).length, 1);
-    return Math.round((values.length / total) * 100);
   }
 }

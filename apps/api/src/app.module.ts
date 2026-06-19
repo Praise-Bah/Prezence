@@ -2,12 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai';
 import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing';
 import { ContentModule } from './content';
+import { EventsModule } from './events';
 import { IntelligenceModule } from './intelligence';
 import { IntegrationModule } from './integration';
 import { NotificationModule } from './notification';
@@ -26,11 +28,13 @@ import { RedisModule } from './redis';
         connection: { url: config.getOrThrow<string>('REDIS_URL') },
       }),
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
     AiModule,
     AuthModule,
     BillingModule,
+    EventsModule,
     IntelligenceModule,
     ContentModule,
     IntegrationModule,

@@ -7,6 +7,7 @@ import type { UserProfile } from '@prezence/types';
 import { Input, Textarea } from '../ui/input';
 import { Button } from '../ui/button';
 import { displayNameFromEmail } from '../../lib/user-display';
+import { updateProfileAction } from '../../lib/actions/auth.actions';
 import { cn } from '../../lib/utils';
 
 const AVATAR = '/assets/placeholders/shared-user-avatar@72x72.webp';
@@ -62,16 +63,32 @@ function SelectField({
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {
-  const [fullName, setFullName] = useState(displayNameFromEmail(user.email));
+  const userExt = user as UserProfile & { name?: string | null; bio?: string | null };
+  const [fullName, setFullName] = useState(userExt.name ?? displayNameFromEmail(user.email));
   const [country, setCountry] = useState(user.country_code ?? 'CM');
   const [language, setLanguage] = useState<string>(user.language ?? 'en');
-  const [bio, setBio] = useState('');
-  const [notice, setNotice] = useState<string | null>(null);
+  const [bio, setBio] = useState(userExt.bio ?? '');
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setNotice('Profile update coming soon');
-    window.setTimeout(() => setNotice(null), 4000);
+    setSaving(true);
+    setNotice(null);
+
+    const result = await updateProfileAction({
+      name: fullName,
+      bio: bio || undefined,
+      language,
+    });
+
+    setSaving(false);
+    if (result.success) {
+      setNotice({ type: 'success', text: result.success });
+    } else {
+      setNotice({ type: 'error', text: result.error ?? 'Something went wrong.' });
+    }
+    window.setTimeout(() => setNotice(null), 5000);
   }
 
   return (
@@ -139,13 +156,26 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       {notice && (
-        <p className="mt-4 rounded-[10px] border border-[rgba(29,78,138,0.15)] bg-[#f0f5fc] px-4 py-3 text-sm text-[#1d4e8a]">
-          {notice}
+        <p
+          className={cn(
+            'mt-4 rounded-[10px] border px-4 py-3 text-sm',
+            notice.type === 'success'
+              ? 'border-[rgba(15,110,86,0.2)] bg-[#f0faf6] text-[#0f6e56]'
+              : 'border-[rgba(192,57,43,0.2)] bg-[rgba(192,57,43,0.05)] text-[#c0392b]',
+          )}
+        >
+          {notice.text}
         </p>
       )}
 
-      <Button type="submit" variant="auth" size="md" className="mt-6 h-[37px] rounded-[10px] px-5">
-        Save Changes
+      <Button
+        type="submit"
+        variant="auth"
+        size="md"
+        disabled={saving}
+        className="mt-6 h-[37px] rounded-[10px] px-5"
+      >
+        {saving ? 'Saving…' : 'Save Changes'}
       </Button>
     </form>
   );

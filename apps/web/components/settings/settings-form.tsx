@@ -8,6 +8,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Toggle } from '../ui/toggle';
 import { displayNameFromEmail } from '../../lib/user-display';
+import { changePasswordAction, logoutAction } from '../../lib/actions/auth.actions';
 import { cn } from '../../lib/utils';
 
 const TIMEZONES = [
@@ -113,6 +114,35 @@ export function SettingsForm({ user }: SettingsFormProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
 
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordNotice, setPasswordNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPasswordNotice({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+    setPasswordSaving(true);
+    setPasswordNotice(null);
+
+    const result = await changePasswordAction({ currentPassword, newPassword });
+    setPasswordSaving(false);
+
+    if (result.success) {
+      setPasswordNotice({ type: 'success', text: result.success });
+      window.setTimeout(() => {
+        void logoutAction();
+      }, 2000);
+    } else {
+      setPasswordNotice({ type: 'error', text: result.error ?? 'Something went wrong.' });
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <SettingsCard title="Profile Information">
@@ -167,54 +197,80 @@ export function SettingsForm({ user }: SettingsFormProps) {
       </SettingsCard>
 
       <SettingsCard title="Password & Security" icon={<Lock className="h-5 w-5 text-[#1a1a2e]" />}>
-        <Input
-          variant="content"
-          label="Current Password"
-          type="password"
-          placeholder="••••••••"
-          readOnly
-          className="border-[rgba(26,26,46,0.1)] bg-[#f8f9fa]"
-        />
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form onSubmit={handlePasswordChange}>
           <Input
             variant="content"
-            label="New Password"
+            label="Current Password"
             type="password"
             placeholder="••••••••"
-            readOnly
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
             className="border-[rgba(26,26,46,0.1)] bg-[#f8f9fa]"
           />
-          <Input
-            variant="content"
-            label="Confirm Password"
-            type="password"
-            placeholder="••••••••"
-            readOnly
-            className="border-[rgba(26,26,46,0.1)] bg-[#f8f9fa]"
-          />
-        </div>
 
-        <div className="mt-4 flex items-center justify-between rounded-[10px] border border-[rgba(26,26,46,0.1)] bg-[rgba(213,232,245,0.3)] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 shrink-0 text-[#1d4e8a]" />
-            <div>
-              <p className="text-sm font-medium text-[#1a1a2e]">Two-Factor Authentication</p>
-              <p className="text-xs text-[#888780]">Add an extra layer of security to your account</p>
-            </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Input
+              variant="content"
+              label="New Password"
+              type="password"
+              placeholder="••••••••"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="border-[rgba(26,26,46,0.1)] bg-[#f8f9fa]"
+            />
+            <Input
+              variant="content"
+              label="Confirm Password"
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="border-[rgba(26,26,46,0.1)] bg-[#f8f9fa]"
+            />
           </div>
-          <Toggle
-            id="two-factor"
-            checked={twoFactor}
-            onChange={setTwoFactor}
-            label=""
-            activeColor="green"
-          />
-        </div>
 
-        <div className="mt-6">
-          <ComingSoonButton label="Update Password" />
-        </div>
+          <div className="mt-4 flex items-center justify-between rounded-[10px] border border-[rgba(26,26,46,0.1)] bg-[rgba(213,232,245,0.3)] px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 shrink-0 text-[#1d4e8a]" />
+              <div>
+                <p className="text-sm font-medium text-[#1a1a2e]">Two-Factor Authentication</p>
+                <p className="text-xs text-[#888780]">Add an extra layer of security to your account</p>
+              </div>
+            </div>
+            <Toggle
+              id="two-factor"
+              checked={twoFactor}
+              onChange={setTwoFactor}
+              label=""
+              activeColor="green"
+            />
+          </div>
+
+          {passwordNotice && (
+            <p
+              className={cn(
+                'mt-4 rounded-[10px] border px-4 py-3 text-sm',
+                passwordNotice.type === 'success'
+                  ? 'border-[rgba(15,110,86,0.2)] bg-[#f0faf6] text-[#0f6e56]'
+                  : 'border-[rgba(192,57,43,0.2)] bg-[rgba(192,57,43,0.05)] text-[#c0392b]',
+              )}
+            >
+              {passwordNotice.text}
+            </p>
+          )}
+
+          <div className="mt-6">
+            <Button
+              type="submit"
+              variant="auth"
+              size="md"
+              disabled={passwordSaving}
+              className="h-[37px] rounded-[10px]"
+            >
+              {passwordSaving ? 'Updating…' : 'Update Password'}
+            </Button>
+          </div>
+        </form>
       </SettingsCard>
 
       <SettingsCard title="Preferences" icon={<Globe className="h-5 w-5 text-[#1a1a2e]" />}>
