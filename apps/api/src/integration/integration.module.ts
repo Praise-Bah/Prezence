@@ -12,6 +12,7 @@ import { AutomationProcessor } from './jobs/automation.processor';
 import { OAuthService } from './services/oauth.service';
 import { ProxyService } from './services/proxy.service';
 import { TokenVaultService } from './services/token-vault.service';
+import { FiverrStrategy } from './strategies/fiverr.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
 import { L3aPlaywrightStrategy } from './strategies/l3a-playwright.strategy';
 import { IntegrationController } from './integration.controller';
@@ -32,6 +33,7 @@ import { IntegrationService } from './integration.service';
     OAuthService,
     TokenVaultService,
     ProxyService,
+    FiverrStrategy,
     GithubStrategy,
     L3aPlaywrightStrategy,
     AutomationProcessor,
