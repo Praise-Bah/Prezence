@@ -116,6 +116,7 @@ export class AuthController {
   // ─── OAuth exchange ────────────────────────────────────────────────────────
 
   @Public()
+  @RateLimit(AUTH_RATE_LIMIT)
   @Post('exchange')
   @HttpCode(HttpStatus.OK)
   exchange(@Body('code') code: string) {
@@ -143,9 +144,7 @@ export class AuthController {
       'FRONTEND_URL',
       'http://localhost:3000',
     );
-    res.redirect(
-      `${frontendUrl}/auth/social/callback?code=${code}&provider=google`,
-    );
+    res.redirect(`${frontendUrl}/social/callback?code=${code}&provider=google`);
   }
 
   // ─── Facebook OAuth ────────────────────────────────────────────────────────
@@ -170,7 +169,7 @@ export class AuthController {
       'http://localhost:3000',
     );
     res.redirect(
-      `${frontendUrl}/auth/social/callback?code=${code}&provider=facebook`,
+      `${frontendUrl}/social/callback?code=${code}&provider=facebook`,
     );
   }
 }

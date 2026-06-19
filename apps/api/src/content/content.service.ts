@@ -66,10 +66,17 @@ export class ContentService {
 
     if (cached) {
       this.logger.debug(`Cache hit for ${cacheKey}`);
-      return {
-        content: JSON.parse(cached) as Record<string, string>,
-        cached: true,
-      };
+      try {
+        return {
+          content: JSON.parse(cached) as Record<string, string>,
+          cached: true,
+        };
+      } catch {
+        this.logger.warn(
+          `Corrupt cache entry for ${cacheKey} — falling through to DB`,
+        );
+        await this.redis.del(cacheKey);
+      }
     }
 
     const profile = await this.profileRepo.findOne({

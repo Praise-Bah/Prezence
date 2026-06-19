@@ -26,13 +26,27 @@ export class ContentController {
     return this.contentService.getAllPlatformSummary(req.user.userId);
   }
 
-  @Get(':platform')
-  getContent(
-    @Request() req: { user: { userId: string } },
-    @Param('platform', new ParseEnumPipe(SUPPORTED_PLATFORM_ENUM))
-    platform: SupportedPlatform,
+  // Static routes must come before @Get(':platform') so Nest doesn't treat
+  // the literal path segment "schedule" as a platform slug.
+  @Get('schedule')
+  getScheduledPosts(@Request() req: { user: { userId: string } }) {
+    return this.contentService.getScheduledPosts(req.user.userId);
+  }
+
+  @Post('schedule')
+  schedulePost(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SchedulePostDto,
   ) {
-    return this.contentService.getContent(req.user.userId, platform);
+    return this.contentService.schedulePost(user.userId, user.plan, dto);
+  }
+
+  @Delete('schedule/:id')
+  cancelScheduledPost(
+    @Request() req: { user: { userId: string } },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.contentService.cancelScheduledPost(req.user.userId, id);
   }
 
   @Post('regenerate')
@@ -47,24 +61,12 @@ export class ContentController {
     );
   }
 
-  @Post('schedule')
-  schedulePost(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: SchedulePostDto,
-  ) {
-    return this.contentService.schedulePost(user.userId, user.plan, dto);
-  }
-
-  @Get('schedule')
-  getScheduledPosts(@Request() req: { user: { userId: string } }) {
-    return this.contentService.getScheduledPosts(req.user.userId);
-  }
-
-  @Delete('schedule/:id')
-  cancelScheduledPost(
+  @Get(':platform')
+  getContent(
     @Request() req: { user: { userId: string } },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('platform', new ParseEnumPipe(SUPPORTED_PLATFORM_ENUM))
+    platform: SupportedPlatform,
   ) {
-    return this.contentService.cancelScheduledPost(req.user.userId, id);
+    return this.contentService.getContent(req.user.userId, platform);
   }
 }
