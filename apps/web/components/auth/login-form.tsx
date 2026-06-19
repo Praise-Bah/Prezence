@@ -6,42 +6,15 @@ import Link from 'next/link';
 import { loginAction, type AuthState } from '../../lib/actions/auth.actions';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { GoogleSignInButton, SocialOAuthRow } from './social-oauth-row';
 
 const initial: AuthState = {};
 
 const AUTH_ASSETS = {
   logoFull: '/assets/brand/shared-logo-full@343x90.png',
-  google: '/assets/social/shared-google@24x24.svg',
-  apple: '/assets/social/shared-apple@24x24.svg',
-  facebook: '/assets/social/shared-facebook@24x24.svg',
 } as const;
 
-function SocialOAuthRow() {
-  return (
-    <div className="flex items-center justify-center gap-3">
-      {(
-        [
-          { src: AUTH_ASSETS.google, label: 'Google' },
-          { src: AUTH_ASSETS.apple, label: 'Apple' },
-          { src: AUTH_ASSETS.facebook, label: 'Facebook' },
-        ] as const
-      ).map((item) => (
-        <button
-          key={item.label}
-          type="button"
-          disabled
-          aria-label={`Continue with ${item.label}`}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#cdd5e9] bg-white shadow-sm transition hover:bg-[#f5f7fc] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.src} alt="" width={24} height={24} />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function LoginForm() {
+export function LoginForm({ oauthError }: { oauthError?: string }) {
   const [state, action, isPending] = useActionState(loginAction, initial);
 
   return (
@@ -75,17 +48,13 @@ export function LoginForm() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="google"
-          size="xl"
-          disabled
-          className="mx-auto w-full max-w-[345px] font-medium"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={AUTH_ASSETS.google} alt="" width={24} height={24} />
-          Log In with Google
-        </Button>
+        {oauthError && (
+          <div className="mx-auto w-full max-w-[345px] rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {oauthError}
+          </div>
+        )}
+
+        <GoogleSignInButton />
 
         <SocialOAuthRow />
 

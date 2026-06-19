@@ -77,6 +77,29 @@ export class AuthService {
     private readonly redis: Redis,
   ) {}
 
+  async createOAuthCode(userId: string): Promise<string> {
+    const code = randomUUID();
+    await this.redis.set(`oauth:code:${code}`, userId, 'EX', 60);
+    return code;
+  }
+
+  async exchangeOAuthCode(
+    code: string,
+  ): Promise<{ user: SanitizedUser } & TokenPair> {
+    const userId = await this.redis.getdel(`oauth:code:${code}`);
+    if (!userId) {
+      throw new UnauthorizedException('Invalid or expired OAuth code');
+    }
+
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User no longer exists');
+    }
+
+    const tokens = await this.issueTokenPair(user, randomUUID());
+    return { user: this.sanitizeUser(user), ...tokens };
+  }
+
   async issueWsTicket(
     userId: string,
   ): Promise<{ ticket: string; expiresIn: number }> {
@@ -349,6 +372,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      plan: user.plan,
     };
     const jti = randomUUID();
 

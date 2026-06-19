@@ -117,6 +117,24 @@ export class PlatformHealthService {
     };
   }
 
+  async getLatestForPlatform(
+    userId: string,
+    platform: string,
+  ): Promise<PlatformHealthSummary | null> {
+    const row = await this.healthRepo.findOne({
+      where: { userId, platform: platform as SupportedPlatform },
+      order: { checkedAt: 'DESC' },
+    });
+    if (!row) return null;
+    return {
+      platform: row.platform,
+      status: row.status,
+      responseMs: row.responseMs,
+      checkedAt: row.checkedAt,
+      errorMessage: row.errorMessage,
+    };
+  }
+
   async getLatest(userId: string): Promise<PlatformHealthSummary[]> {
     const connections = await this.connectionRepo.find({
       where: { userId, status: 'active' },

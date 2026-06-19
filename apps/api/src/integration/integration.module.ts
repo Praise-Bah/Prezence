@@ -9,11 +9,14 @@ import { RedisModule } from '../redis';
 import { AutomationJobEntity } from './entities/automation-job.entity';
 import { PlatformConnection } from './entities/platform-connection.entity';
 import { AutomationProcessor } from './jobs/automation.processor';
+import { WebhookRetryProcessor } from './jobs/webhook-retry.processor';
 import { OAuthService } from './services/oauth.service';
 import { ProxyService } from './services/proxy.service';
 import { TokenVaultService } from './services/token-vault.service';
 import { FiverrStrategy } from './strategies/fiverr.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
+import { LinkedInStrategy } from './strategies/linkedin.strategy';
+import { MetaStrategy } from './strategies/meta.strategy';
 import { L3aPlaywrightStrategy } from './strategies/l3a-playwright.strategy';
 import { IntegrationController } from './integration.controller';
 import { IntegrationService } from './integration.service';
@@ -21,7 +24,10 @@ import { IntegrationService } from './integration.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([PlatformConnection, AutomationJobEntity]),
-    BullModule.registerQueue({ name: QUEUE_NAMES.automation }),
+    BullModule.registerQueue(
+      { name: QUEUE_NAMES.automation },
+      { name: QUEUE_NAMES.webhook_retry },
+    ),
     ContentModule,
     EventsModule,
     NotificationModule,
@@ -33,10 +39,13 @@ import { IntegrationService } from './integration.service';
     OAuthService,
     TokenVaultService,
     ProxyService,
-    FiverrStrategy,
     GithubStrategy,
+    LinkedInStrategy,
+    MetaStrategy,
+    FiverrStrategy,
     L3aPlaywrightStrategy,
     AutomationProcessor,
+    WebhookRetryProcessor,
   ],
   exports: [IntegrationService, TokenVaultService],
 })

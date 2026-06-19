@@ -53,6 +53,7 @@ export const api = {
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
+  delete: <T>(path: string) => apiFetch<T>(path, { method: 'DELETE' }),
   postForm: async <T>(path: string, form: FormData): Promise<T> => {
     const token = await getAccessToken();
     const headers: Record<string, string> = {};

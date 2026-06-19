@@ -7,6 +7,7 @@ import { QUEUE_NAMES } from '@prezence/config';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { REDIS_CLIENT } from '../redis';
 import { ContentService } from './content.service';
+import { ScheduledPost } from './entities/scheduled-post.entity';
 
 const mockProfile = (platform = 'linkedin'): ProfileData =>
   ({
@@ -76,8 +77,26 @@ describe('ContentService', () => {
           useValue: { findOne: jest.fn() },
         },
         {
+          provide: getRepositoryToken(ScheduledPost),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            findOne: jest.fn(),
+            find: jest.fn(),
+            update: jest.fn(),
+          },
+        },
+        {
           provide: getQueueToken(QUEUE_NAMES.content_generation),
           useValue: queue,
+        },
+        {
+          provide: getQueueToken(QUEUE_NAMES.content_schedule),
+          useValue: {
+            add: jest.fn().mockResolvedValue({ id: 'sched-job-uuid' }),
+            getJob: jest.fn(),
+            getDelayed: jest.fn().mockResolvedValue([]),
+          },
         },
         { provide: REDIS_CLIENT, useValue: redis },
       ],

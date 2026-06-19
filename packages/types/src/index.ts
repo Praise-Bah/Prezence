@@ -16,11 +16,16 @@ export type SubscriptionStatus =
 export interface UserProfile {
   id: string;
   email: string;
-  name?: string;
+  name?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  timezone?: string | null;
   role: UserRole;
   plan: SubscriptionPlan;
   country_code: string;
   language: 'en' | 'fr' | 'camfranglais';
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
   created_at: string;
 }
 
@@ -77,6 +82,14 @@ export interface PlatformPublishJobData {
   automationJobId: string;
   layer: IntegrationLayer;
   contentSections: Record<string, string>;
+}
+
+export interface WebhookRetryJobData {
+  webhookUrl: string;
+  payload: Record<string, unknown>;
+  automationJobId: string;
+  userId: string;
+  platform: SupportedPlatform;
 }
 
 export interface AutomationJob {

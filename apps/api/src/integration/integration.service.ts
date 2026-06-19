@@ -132,12 +132,18 @@ export class IntegrationService {
       );
     }
 
-    // Reject unsupported platforms before the job enters the queue so no
-    // retry attempts are wasted on a deterministically-failing stub.
-    if (platform !== 'github') {
+    // Reject platforms with no implemented strategy so no retry attempts are
+    // wasted on a deterministically-failing job.
+    const IMPLEMENTED: SupportedPlatform[] = [
+      'github',
+      'linkedin',
+      'facebook',
+      'instagram',
+      'fiverr',
+    ];
+    if (!IMPLEMENTED.includes(platform)) {
       throw new ServiceUnavailableException(
-        `L3A browser automation for ${platform} is not yet available. ` +
-          'Check back after the Phase 2 release.',
+        `Publishing for ${platform} is not yet available. Check back in a future release.`,
       );
     }
 
