@@ -14,6 +14,7 @@ import { AiEmbedding } from './entities/ai-embedding.entity';
 import { InterviewResponse } from './entities/interview-response.entity';
 import { MarketScore } from './entities/market-score.entity';
 import { ProfileData } from './entities/profile-data.entity';
+import { EmbeddingCronService } from './jobs/embedding-cron.service';
 import { EmbeddingService } from './services/embedding.service';
 
 @Module({
@@ -37,6 +38,7 @@ import { EmbeddingService } from './services/embedding.service';
   providers: [
     IntelligenceService,
     EmbeddingService,
+    EmbeddingCronService,
     ContentGenerationProcessor,
     MarketScoreProcessor,
   ],

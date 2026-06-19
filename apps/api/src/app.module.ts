@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai';
@@ -27,6 +28,7 @@ import { RedisModule } from './redis';
         connection: { url: config.getOrThrow<string>('REDIS_URL') },
       }),
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
     AiModule,
