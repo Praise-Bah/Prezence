@@ -49,6 +49,21 @@
   real MTN MoMo + Orange Money SMS recognition patterns in screenshot screener,
   amount tolerance +500 XAF for transfer fees, PLAN_PLATFORM_LIMITS with 999 sentinel,
   plan prices corrected (XAF 3,000 one-time / 6,000/mo / 12,000/mo); CI green, merged to main
+- Phase 2 feature completions (PR #55, merged to develop → main):
+  - Email BullMQ worker (Resend transport, templates for all event types)
+  - PATCH /auth/me (name, bio, location, timezone, notification prefs)
+  - POST /auth/change-password, POST /auth/forgot-password, POST /auth/reset-password
+  - Notification persistence: TypeORM entity, migration, GET/PATCH endpoints
+  - Platform OAuth redirect flow (Meta/LinkedIn callback + encrypted token store)
+  - Market-Fit Score BullMQ processor (AI scoring via Gemini Flash)
+  - WebSocket gateway + ticket-based auth + frontend job-status hook
+  - ChatService + PromptRegistry unit tests (16 tests); auth E2E journey (9 assertions)
+  - Loading skeletons + shared error boundary for all (app) routes
+  - Voice-learning nightly cron (EmbeddingCronService, @Cron 02:00 UTC)
+  - Font swap: Inter (body) + Poppins (headings) via next/font
+  - Fiverr L3A Playwright strategy with real CSS selectors
+  - SQL migrations: user profile columns, password_reset_tokens table
+  - Security fix: stale reset tokens invalidated before new one issued
 - Web frontend — all 9 Figma phases implemented (Cursor + Figma MCP):
   - Phase 1: 32 Figma assets exported to apps/web/public/assets/
   - Phase 2: Landing page (apps/web/app/page.tsx)
@@ -64,46 +79,35 @@
   - UserProfile.name? added to packages/types
 
 ## 🔄 In Progress
-- Nothing — all MVP backend modules and web frontend phases are shipped to main
+- Nothing — Phase 2 complete and merged to main
 
 ## 📋 Up Next (priority order)
 
-### High priority
-1. **Unit tests for ChatService + AiController** — zero chat-specific tests; CLAUDE.md
-   requires ≥70% coverage on AIModule. Write chat.service.spec.ts + test for POST /ai/chat.
-2. **Profile update endpoint** — `PATCH /users/me` in AuthModule (name, bio fields);
-   wire to apps/web/components/profile/profile-form.tsx (currently "coming soon").
-3. **Notification persistence** — TypeORM entity + `notifications` table migration +
-   POST /notifications (create), PATCH /notifications/:id/read, PATCH /notifications/read-all
-   endpoints; update GET /notifications to return real rows.
-4. **Email processor job** — QUEUE_NAMES.email is enqueued by NotificationService but
-   no BullMQ processor worker exists; emails are silently dropped.
+### High priority (Phase 3 — Persistence & Polish)
+1. **AI chat history** — POST /ai/chat works but conversation history is not persisted
+   or retrieved; each message is stateless. Need chat_sessions + chat_messages tables,
+   GET /ai/chat/history, and wire the frontend chat to load/append history.
+2. **Platform OAuth connect/disconnect UI** — IntegrationModule backend is complete
+   (connect/disconnect/list endpoints); no frontend connect flow exists yet.
+   Wire apps/web/app/(app)/platforms/ to POST /integration/connect and DELETE /integration/:platform.
+3. **GET /platform-health/:platform** — only list + POST /check exist; no single-platform
+   health detail route (noted by Cursor in Phase 8).
+4. **Settings save wiring** — notification preferences + timezone PATCH calls are
+   unconnected in apps/web/components/settings/settings-form.tsx.
 
 ### Medium priority
-5. **Settings save endpoints** — password change (`PATCH /auth/password`), notification
-   preferences, timezone; wire to apps/web/components/settings/settings-form.tsx.
-6. **Market fit computation job processor** — QUEUE_NAMES.mfs_compute is defined,
-   market_scores table exists, but no processor worker computes scores.
-7. **Platform OAuth connect/disconnect UI** — IntegrationModule backend is complete
-   (connect/disconnect/list endpoints); no frontend connect flow exists yet.
-8. **Font swap** — all Figma designs use Inter/Poppins; web app still uses Geist.
-   Add `next/font` imports in apps/web/app/layout.tsx.
+5. **Platform publish strategies** — only GitHub (L1) and Fiverr (L3A) exist;
+   LinkedIn, Instagram, Facebook, Twitter/X strategies needed for Phase 3 launch.
+6. **Admin screens** — AdminBillingController routes not exposed; no admin frontend.
+7. **Webhook retry queue** — QUEUE_NAMES.webhook_retry defined in config; no processor.
+8. **Content scheduler** — Professional plan feature in plan-data.ts; no backend scheduler.
 
-### Lower priority / Phase 2+
+### Lower priority / Phase 4+
 9. **Mobile app** (apps/mobile) — bare Expo SDK 51 starter; nothing implemented.
-10. **Platform publish strategies** — only GitHub (L1) and L3A Playwright stub exist;
-    Instagram, Facebook, Fiverr, Freelancer, TikTok, Twitter strategies missing.
-11. **Admin screens** — AdminBillingController code exists but routes not exposed in main
-    API routing; no admin frontend screens built yet.
-12. **Social OAuth** — Google/Apple/Facebook buttons on auth screens are UI-only/disabled.
-13. **Content scheduler** — listed as Professional plan feature in plan-data.ts; no
-    backend scheduler implemented.
-14. **Watch demo modal** — landing page hero CTA exists but not wired to any video/modal.
-15. **GET /platform-health/:platform** — only list + POST /check exist; no single-platform
-    health detail route (noted by Cursor in Phase 8).
-16. **Webhook retry queue** — QUEUE_NAMES.webhook_retry defined in config; no processor.
-17. **AI chat history** — POST /ai/chat works but conversation history is not persisted
-    or retrieved; each message is stateless.
+10. **Social OAuth** — Google/Apple/Facebook buttons on auth screens are UI-only/disabled.
+11. **Watch demo modal** — landing page hero CTA not wired to any video/modal.
+12. **AI usage dashboard** — ai_usage_logs table and AiUsageService exist but no
+    admin or user-facing usage/quota dashboard built yet.
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at

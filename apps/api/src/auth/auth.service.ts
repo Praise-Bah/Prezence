@@ -264,7 +264,10 @@ export class AuthService {
 
     // Invalidate any previous unused tokens for this user before issuing a new one.
     // Prevents a prior token being used to override a freshly-changed password.
-    await this.resetTokenRepository.delete({ userId: user.id, usedAt: IsNull() });
+    await this.resetTokenRepository.delete({
+      userId: user.id,
+      usedAt: IsNull(),
+    });
 
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
