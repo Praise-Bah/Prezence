@@ -86,4 +86,13 @@ describe('NotificationService', () => {
       expect.anything(),
     );
   });
+
+  it('enqueues user_registered welcome email', async () => {
+    await service.sendWelcome('user-1');
+    expect(mockQueue.add).toHaveBeenCalledWith(
+      'send',
+      expect.objectContaining({ userId: 'user-1', type: 'user_registered' }),
+      expect.objectContaining({ attempts: 3 }),
+    );
+  });
 });

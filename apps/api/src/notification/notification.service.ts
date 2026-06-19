@@ -19,6 +19,10 @@ export class NotificationService {
     private readonly emailQueue: Queue<EmailJobData>,
   ) {}
 
+  async sendWelcome(userId: string): Promise<void> {
+    await this.enqueue(userId, 'user_registered', {});
+  }
+
   async sendPaymentInitiated(
     userId: string,
     opts: {

@@ -1,4 +1,5 @@
 export type EmailType =
+  | 'user_registered'
   | 'payment_initiated'
   | 'payment_approved'
   | 'payment_provisional'
@@ -41,6 +42,16 @@ export function renderTemplate(
   data: Record<string, unknown>,
 ): EmailPayload {
   switch (type) {
+    case 'user_registered':
+      return {
+        subject: 'Welcome to Prezence — your account is ready',
+        html: base(`
+          <h2>Welcome to Prezence, ${s(data.name, 'there')}!</h2>
+          <p>Your account has been created. Start building your personal brand across Cameroon and sub-Saharan Africa.</p>
+          <p><a href="https://prezence.app/dashboard" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Go to your dashboard</a></p>
+        `),
+      };
+
     case 'payment_initiated':
       return {
         subject: `Your payment reference: ${s(data.reference)}`,

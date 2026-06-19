@@ -1,10 +1,12 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
+import { QUEUE_NAMES } from '@prezence/config';
 import { AuthService } from './auth.service';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User } from './entities/user.entity';
@@ -87,6 +89,10 @@ describe('AuthService', () => {
             save: jest.fn(),
             update: jest.fn(),
           },
+        },
+        {
+          provide: getQueueToken(QUEUE_NAMES.email),
+          useValue: { add: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

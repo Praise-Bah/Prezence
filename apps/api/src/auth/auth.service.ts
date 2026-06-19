@@ -5,11 +5,14 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import type { Queue } from 'bullmq';
 import { IsNull, Repository } from 'typeorm';
+import { QUEUE_NAMES } from '@prezence/config';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -50,6 +53,8 @@ export class AuthService {
     private readonly lockoutService: LockoutService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectQueue(QUEUE_NAMES.email)
+    private readonly emailQueue: Queue,
   ) {}
 
   sanitizeUser(user: User): SanitizedUser {
@@ -80,6 +85,15 @@ export class AuthService {
     });
 
     const tokens = await this.issueTokenPair(user, randomUUID());
+
+    this.emailQueue
+      .add('send', { userId: user.id, type: 'user_registered', data: {} }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+      })
+      .catch((err: unknown) => {
+        this.logger.warn(`Failed to enqueue welcome email for ${user.id}: ${String(err)}`);
+      });
 
     return { user: this.sanitizeUser(user), ...tokens };
   }
