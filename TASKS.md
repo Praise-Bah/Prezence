@@ -79,35 +79,50 @@
   - UserProfile.name? added to packages/types
 
 ## 🔄 In Progress
-- Nothing — Phase 2 complete and merged to main
+- Nothing — all web items complete; ready to commit + PR
+
+## ✅ Phase 3 complete (feature/ai-module)
+1. **AI chat history** — chat_sessions + chat_messages tables, GET /ai/chat/history,
+   frontend chat loads + appends history.
+2. **Platform OAuth connect/disconnect UI** — connect flow + disconnect button wired in
+   apps/web/app/(app)/platforms/; calls POST /integration/connect and DELETE /integration/:platform.
+3. **GET /platform-health/:platform** — single-platform health route added.
+4. **Settings save wiring** — notification preferences + timezone PATCH wired in settings-form.tsx.
+5. **Platform publish strategies** — LinkedIn (L2 ugcPosts) and Meta/Instagram (Graph API v19)
+   strategies added; AutomationProcessor routes by platform.
+6. **Admin screens** — /admin/billing queue with approve/reject modal; sidebar Admin link
+   visible to system_admin and support roles.
+7. **Content scheduler** — POST/GET/DELETE /content/schedule; BullMQ delayed job;
+   plan gate (professional/elite only); Schedule button + modal + scheduled posts list
+   in ContentViewer; JWT payload now carries `plan` field.
+
+✅ **AI usage dashboard** — GET /ai/usage (user) + GET /ai/usage/admin (system_admin/support);
+   /usage page with stat cards, by-model table, by-feature table; admin sees system-wide
+   view + top-10 users table; Usage link added to sidebar secondary nav.
+
+✅ **Watch demo modal** — WatchDemoButton client component with YouTube embed modal;
+   wired into landing hero, hero remains a server component.
+
+✅ **Webhook retry queue** — WebhookRetryProcessor consumes QUEUE_NAMES.webhook_retry;
+   AutomationProcessor now escalates L1 failures to L2 Make.com webhook when
+   MAKE_WEBHOOK_URL_{PLATFORM} env var is set; @OnWorkerEvent('failed') marks
+   automation job failed and notifies user after all retries exhausted.
+   WebhookRetryJobData added to @prezence/types.
+
+✅ **Social OAuth** — Google/Facebook Passport strategies; code-exchange flow avoids
+   cross-domain cookie issues; `/auth/social/callback` server page issues httpOnly cookies;
+   `?error=oauth_failed` banner on login page; `.env.example` updated with
+   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`.
+   **Action required:** add real values to Doppler before OAuth flows will work.
+   Apple Sign-In deferred (requires paid Apple Developer membership).
 
 ## 📋 Up Next (priority order)
 
-### High priority (Phase 3 — Persistence & Polish)
-1. **AI chat history** — POST /ai/chat works but conversation history is not persisted
-   or retrieved; each message is stateless. Need chat_sessions + chat_messages tables,
-   GET /ai/chat/history, and wire the frontend chat to load/append history.
-2. **Platform OAuth connect/disconnect UI** — IntegrationModule backend is complete
-   (connect/disconnect/list endpoints); no frontend connect flow exists yet.
-   Wire apps/web/app/(app)/platforms/ to POST /integration/connect and DELETE /integration/:platform.
-3. **GET /platform-health/:platform** — only list + POST /check exist; no single-platform
-   health detail route (noted by Cursor in Phase 8).
-4. **Settings save wiring** — notification preferences + timezone PATCH calls are
-   unconnected in apps/web/components/settings/settings-form.tsx.
-
-### Medium priority
-5. **Platform publish strategies** — only GitHub (L1) and Fiverr (L3A) exist;
-   LinkedIn, Instagram, Facebook, Twitter/X strategies needed for Phase 3 launch.
-6. **Admin screens** — AdminBillingController routes not exposed; no admin frontend.
-7. **Webhook retry queue** — QUEUE_NAMES.webhook_retry defined in config; no processor.
-8. **Content scheduler** — Professional plan feature in plan-data.ts; no backend scheduler.
-
-### Lower priority / Phase 4+
-9. **Mobile app** (apps/mobile) — bare Expo SDK 51 starter; nothing implemented.
-10. **Social OAuth** — Google/Apple/Facebook buttons on auth screens are UI-only/disabled.
-11. **Watch demo modal** — landing page hero CTA not wired to any video/modal.
-12. **AI usage dashboard** — ai_usage_logs table and AiUsageService exist but no
-    admin or user-facing usage/quota dashboard built yet.
+1. **Doppler secrets** — add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `FRONTEND_URL` (prod URL) to Doppler.
+2. **Demo video** — update `DEMO_VIDEO_ID` in `apps/web/components/landing/demo-modal.tsx`
+   from placeholder `dQw4w9WgXcQ` to the real Prezence YouTube video ID.
+3. **Mobile app** (apps/mobile) — deferred; web-first complete.
 
 ## 🚧 Blockers / Open Decisions
 - supabase-read/write and github MCP servers point to packages installed locally at

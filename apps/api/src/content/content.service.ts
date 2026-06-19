@@ -1,4 +1,11 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
@@ -7,10 +14,13 @@ import { Repository } from 'typeorm';
 import { INTERVIEW_VERSION, QUEUE_NAMES } from '@prezence/config';
 import type {
   ContentGenerationJobData,
+  PlatformPublishJobData,
   SupportedPlatform,
 } from '@prezence/types';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { REDIS_CLIENT } from '../redis';
+import type { SchedulePostDto } from './dto/schedule-post.dto';
+import { ScheduledPost } from './entities/scheduled-post.entity';
 
 export interface PlatformSummary {
   platform: SupportedPlatform;
@@ -20,6 +30,8 @@ export interface PlatformSummary {
   generatedAt: Date | null;
   cached: boolean;
 }
+
+const PLAN_SCHEDULE_ACCESS = new Set(['professional', 'elite']);
 
 @Injectable()
 export class ContentService {
@@ -32,8 +44,14 @@ export class ContentService {
     private readonly marketScoreRepo: Repository<MarketScore>,
     @InjectRepository(InterviewResponse)
     private readonly interviewRepo: Repository<InterviewResponse>,
+    @InjectRepository(ScheduledPost)
+    private readonly scheduleRepo: Repository<ScheduledPost>,
     @InjectQueue(QUEUE_NAMES.content_generation)
     private readonly generationQueue: Queue<ContentGenerationJobData>,
+    @InjectQueue(QUEUE_NAMES.content_schedule)
+    private readonly scheduleQueue: Queue<
+      PlatformPublishJobData & { scheduledPostId: string }
+    >,
     @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
   ) {}
@@ -163,5 +181,101 @@ export class ContentService {
       jobId: String(job.id),
       message: `Re-generation started for ${platform}. Your content will be updated within a few minutes.`,
     };
+  }
+
+  async schedulePost(
+    userId: string,
+    userPlan: string,
+    dto: SchedulePostDto,
+  ): Promise<ScheduledPost> {
+    if (!PLAN_SCHEDULE_ACCESS.has(userPlan)) {
+      throw new ForbiddenException(
+        'Content scheduling requires a Professional or Elite plan.',
+      );
+    }
+
+    const scheduledAt = new Date(dto.scheduledAt);
+    if (scheduledAt <= new Date()) {
+      throw new BadRequestException('scheduledAt must be in the future.');
+    }
+
+    const { content: contentSections } = await this.getContent(
+      userId,
+      dto.platform,
+    );
+
+    const post = await this.scheduleRepo.save(
+      this.scheduleRepo.create({
+        userId,
+        platform: dto.platform,
+        contentSections,
+        scheduledAt,
+        status: 'scheduled',
+      }),
+    );
+
+    const delayMs = scheduledAt.getTime() - Date.now();
+    await this.scheduleQueue.add(
+      'publish-scheduled',
+      {
+        userId,
+        platform: dto.platform,
+        automationJobId: post.id,
+        layer: 'L1',
+        contentSections,
+        scheduledPostId: post.id,
+      },
+      {
+        delay: delayMs,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 15000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+
+    this.logger.log(
+      `Post scheduled: ${post.id} for ${userId}/${dto.platform} at ${scheduledAt.toISOString()}`,
+    );
+
+    return post;
+  }
+
+  async getScheduledPosts(userId: string): Promise<ScheduledPost[]> {
+    return this.scheduleRepo.find({
+      where: { userId },
+      order: { scheduledAt: 'ASC' },
+    });
+  }
+
+  async cancelScheduledPost(
+    userId: string,
+    postId: string,
+  ): Promise<{ message: string }> {
+    const post = await this.scheduleRepo.findOne({
+      where: { id: postId, userId },
+    });
+    if (!post) {
+      throw new NotFoundException('Scheduled post not found.');
+    }
+    if (post.status !== 'scheduled') {
+      throw new BadRequestException(
+        `Cannot cancel a post with status "${post.status}".`,
+      );
+    }
+
+    await this.scheduleRepo.update(postId, { status: 'cancelled' });
+
+    // BullMQ delayed jobs use the job ID equal to the post ID for lookup.
+    // If the job has already been picked up, the update above still marks
+    // it cancelled so the processor will skip it.
+    const jobs = await this.scheduleQueue.getDelayed();
+    const job = jobs.find((j) => {
+      const data = j.data as { scheduledPostId?: string };
+      return data.scheduledPostId === postId;
+    });
+    if (job) await job.remove();
+
+    return { message: 'Scheduled post cancelled.' };
   }
 }

@@ -8,8 +8,30 @@ import { DataSource, In, Repository } from 'typeorm';
 import { SubscriptionRequest } from './entities/subscription-request.entity';
 import { PaymentEvent } from './entities/payment-event.entity';
 import type { ReviewSubmissionDto } from './dto/review-submission.dto';
+import type {
+  PaymentMethod,
+  SubscriptionPlan,
+  SubscriptionStatus,
+} from '@prezence/types';
 import { UsersService } from '../auth';
 import { NotificationService } from '../notification';
+
+export interface PendingSubmission {
+  id: string;
+  userId: string;
+  userEmail: string | null;
+  plan: SubscriptionPlan;
+  amountXaf: number;
+  paymentMethod: PaymentMethod;
+  paymentReference: string;
+  screenshotUrl: string | null;
+  transactionRef: string | null;
+  status: SubscriptionStatus;
+  aiConfidence: number | null;
+  aiConfidenceLevel: string | null;
+  aiScreeningResult: Record<string, unknown> | null;
+  createdAt: Date;
+}
 
 @Injectable()
 export class AdminBillingService {
@@ -23,14 +45,35 @@ export class AdminBillingService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async listPending(): Promise<SubscriptionRequest[]> {
-    return this.requestRepo.find({
+  async listPending(): Promise<PendingSubmission[]> {
+    const requests = await this.requestRepo.find({
       where: {
         status: In(['pending_ai_review', 'provisional']),
         screenedByAi: true,
       },
       order: { createdAt: 'ASC' },
     });
+
+    const userIds = [...new Set(requests.map((r) => r.userId))];
+    const users = await this.usersService.findManyByIds(userIds);
+    const emailById = new Map(users.map((u) => [u.id, u.email]));
+
+    return requests.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      userEmail: emailById.get(r.userId) ?? null,
+      plan: r.plan,
+      amountXaf: r.amountXaf,
+      paymentMethod: r.paymentMethod,
+      paymentReference: r.paymentReference,
+      screenshotUrl: r.screenshotUrl,
+      transactionRef: r.transactionRef,
+      status: r.status,
+      aiConfidence: r.aiConfidence,
+      aiConfidenceLevel: r.aiConfidenceLevel,
+      aiScreeningResult: r.aiScreeningResult,
+      createdAt: r.createdAt,
+    }));
   }
 
   async review(

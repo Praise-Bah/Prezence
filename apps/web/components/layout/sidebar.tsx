@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { UserProfile } from '@prezence/types';
 import {
+  BarChart2,
   Bell,
   ChevronLeft,
   ChevronRight,
@@ -15,6 +16,7 @@ import {
   Layers,
   PenLine,
   Settings,
+  ShieldCheck,
   Sparkles,
   User,
 } from 'lucide-react';
@@ -38,6 +40,7 @@ const primaryNav = [
 ] as const;
 
 const secondaryNav = [
+  { href: '/usage', label: 'AI Usage', icon: BarChart2 },
   { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/billing', label: 'Subscription', icon: CreditCard },
   { href: '/notifications', label: 'Notifications', icon: Bell },
@@ -151,6 +154,20 @@ export function Sidebar({ user }: SidebarProps) {
               </Link>
             );
           })}
+          {(user.role === 'system_admin' || user.role === 'support') && (
+            <Link
+              href="/admin/billing"
+              title={collapsed ? 'Admin' : undefined}
+              className={cn(
+                'flex h-11 items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-colors',
+                isActive('/admin') ? 'bg-[#eef2ff] text-[#1a1a2e]' : 'text-[#1a1a2e] hover:bg-[#f8f9fa]',
+                collapsed && 'justify-center px-0',
+              )}
+            >
+              <ShieldCheck className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+              {!collapsed && <span className="leading-5">Admin</span>}
+            </Link>
+          )}
         </div>
       </nav>
 

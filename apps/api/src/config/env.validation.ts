@@ -100,6 +100,22 @@ class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  GOOGLE_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  FACEBOOK_APP_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  FACEBOOK_APP_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
   API_URL?: string;
 
   @IsOptional()

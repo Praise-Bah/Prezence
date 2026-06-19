@@ -8,7 +8,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Toggle } from '../ui/toggle';
 import { displayNameFromEmail } from '../../lib/user-display';
-import { changePasswordAction, logoutAction } from '../../lib/actions/auth.actions';
+import { changePasswordAction, logoutAction, updateProfileAction } from '../../lib/actions/auth.actions';
 import { cn } from '../../lib/utils';
 
 const TIMEZONES = [
@@ -107,10 +107,12 @@ interface SettingsFormProps {
 export function SettingsForm({ user }: SettingsFormProps) {
   const [fullName] = useState(displayNameFromEmail(user.email));
   const [language, setLanguage] = useState<string>(user.language ?? 'en');
-  const [timezone, setTimezone] = useState('Africa/Douala');
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
+  const [timezone, setTimezone] = useState(user.timezone ?? 'Africa/Douala');
+  const [emailNotifications, setEmailNotifications] = useState(user.emailNotifications ?? true);
+  const [pushNotifications, setPushNotifications] = useState(user.pushNotifications ?? true);
   const [twoFactor, setTwoFactor] = useState(false);
+  const [preferencesSaving, setPreferencesSaving] = useState(false);
+  const [preferencesNotice, setPreferencesNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
 
@@ -140,6 +142,23 @@ export function SettingsForm({ user }: SettingsFormProps) {
       }, 2000);
     } else {
       setPasswordNotice({ type: 'error', text: result.error ?? 'Something went wrong.' });
+    }
+  }
+
+  async function handlePreferencesSave() {
+    setPreferencesSaving(true);
+    setPreferencesNotice(null);
+    const result = await updateProfileAction({
+      language,
+      timezone,
+      email_notifications: emailNotifications,
+      push_notifications: pushNotifications,
+    });
+    setPreferencesSaving(false);
+    if (result.success) {
+      setPreferencesNotice({ type: 'success', text: result.success });
+    } else {
+      setPreferencesNotice({ type: 'error', text: result.error ?? 'Something went wrong.' });
     }
   }
 
@@ -310,6 +329,32 @@ export function SettingsForm({ user }: SettingsFormProps) {
             label="Push Notifications"
             description="Receive browser notifications"
           />
+        </div>
+
+        {preferencesNotice && (
+          <p
+            className={cn(
+              'mt-4 rounded-[10px] border px-4 py-3 text-sm',
+              preferencesNotice.type === 'success'
+                ? 'border-[rgba(15,110,86,0.2)] bg-[#f0faf6] text-[#0f6e56]'
+                : 'border-[rgba(192,57,43,0.2)] bg-[rgba(192,57,43,0.05)] text-[#c0392b]',
+            )}
+          >
+            {preferencesNotice.text}
+          </p>
+        )}
+
+        <div className="mt-6">
+          <Button
+            type="button"
+            variant="auth"
+            size="md"
+            disabled={preferencesSaving}
+            className="h-[37px] rounded-[10px]"
+            onClick={() => { void handlePreferencesSave(); }}
+          >
+            {preferencesSaving ? 'Saving…' : 'Save Preferences'}
+          </Button>
         </div>
 
         <div className="mt-6 border-t border-[rgba(26,26,46,0.08)] pt-6">

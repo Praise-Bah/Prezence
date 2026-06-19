@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { disconnectPlatformAction } from '../../lib/actions/integration.actions';
 
 interface ConnectPlatformsProps {
   connectedPlatforms: string[];
@@ -42,7 +43,10 @@ function resolveNotice(
 }
 
 export function ConnectPlatforms({ connectedPlatforms }: ConnectPlatformsProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
   const initialNotice = useMemo(
     () => resolveNotice(searchParams.get('connected'), searchParams.get('error')),
@@ -57,6 +61,20 @@ export function ConnectPlatforms({ connectedPlatforms }: ConnectPlatformsProps) 
     const t = setTimeout(() => setNotice(null), 5000);
     return () => clearTimeout(t);
   }, [notice]);
+
+  function handleDisconnect(platform: string) {
+    setDisconnecting(platform);
+    startTransition(async () => {
+      const result = await disconnectPlatformAction(platform);
+      setDisconnecting(null);
+      if (result.error) {
+        setNotice({ type: 'error', message: result.error });
+      } else {
+        setNotice({ type: 'success', message: result.success ?? 'Disconnected.' });
+        router.refresh();
+      }
+    });
+  }
 
   return (
     <div className="mt-8">
@@ -80,6 +98,7 @@ export function ConnectPlatforms({ connectedPlatforms }: ConnectPlatformsProps) 
       <div className="grid gap-4 sm:grid-cols-2">
         {OAUTH_PLATFORMS.map(({ id, label, description, icon }) => {
           const isConnected = connectedPlatforms.includes(id);
+          const isDisconnecting = disconnecting === id;
           return (
             <div
               key={id}
@@ -93,9 +112,19 @@ export function ConnectPlatforms({ connectedPlatforms }: ConnectPlatformsProps) 
                 </div>
               </div>
               {isConnected ? (
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                  Connected
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                    Connected
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => handleDisconnect(id)}
+                    className="rounded-full border border-[#e2e8f0] px-3 py-1 text-xs font-semibold text-[#888780] transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
+                  >
+                    {isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                  </button>
+                </div>
               ) : (
                 <a
                   href={`/api/integration/oauth/${id}/start`}

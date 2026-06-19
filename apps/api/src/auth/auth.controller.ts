@@ -6,7 +6,13 @@ import {
   HttpStatus,
   Patch,
   Post,
+  Req,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -19,6 +25,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import type { AuthenticatedUser } from './jwt-payload.interface';
+import type { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 const AUTH_RATE_LIMIT = { limit: 5, ttlSeconds: 15 * 60 };
@@ -28,6 +35,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly config: ConfigService,
   ) {}
 
   @Public()
@@ -103,5 +111,66 @@ export class AuthController {
   @Get('ws-ticket')
   async wsTicket(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.issueWsTicket(user.userId);
+  }
+
+  // ─── OAuth exchange ────────────────────────────────────────────────────────
+
+  @Public()
+  @Post('exchange')
+  @HttpCode(HttpStatus.OK)
+  exchange(@Body('code') code: string) {
+    return this.authService.exchangeOAuthCode(code);
+  }
+
+  // ─── Google OAuth ──────────────────────────────────────────────────────────
+
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin() {
+    // Passport redirects to Google — no body needed
+  }
+
+  @Public()
+  @Get('callback/google')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(
+    @Req() req: Request & { user: User },
+    @Res() res: Response,
+  ): Promise<void> {
+    const code = await this.authService.createOAuthCode(req.user.id);
+    const frontendUrl = this.config.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    res.redirect(
+      `${frontendUrl}/auth/social/callback?code=${code}&provider=google`,
+    );
+  }
+
+  // ─── Facebook OAuth ────────────────────────────────────────────────────────
+
+  @Public()
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  facebookLogin() {
+    // Passport redirects to Facebook — no body needed
+  }
+
+  @Public()
+  @Get('callback/facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookCallback(
+    @Req() req: Request & { user: User },
+    @Res() res: Response,
+  ): Promise<void> {
+    const code = await this.authService.createOAuthCode(req.user.id);
+    const frontendUrl = this.config.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    res.redirect(
+      `${frontendUrl}/auth/social/callback?code=${code}&provider=facebook`,
+    );
   }
 }
