@@ -48,6 +48,14 @@ export class NotificationController {
     return notifications.map(toDto);
   }
 
+  @Patch('read-all')
+  @HttpCode(HttpStatus.OK)
+  async markAllRead(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ updated: number }> {
+    return this.notificationService.markAllRead(user.userId);
+  }
+
   @Patch(':id/read')
   @HttpCode(HttpStatus.OK)
   async markRead(

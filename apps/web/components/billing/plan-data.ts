@@ -1,3 +1,4 @@
+import { PLAN_PRICES_XAF } from '@prezence/config';
 import type { SubscriptionPlan } from '@prezence/types';
 
 export type PaidPlan = Exclude<SubscriptionPlan, 'free'>;
@@ -17,11 +18,15 @@ export interface PlanDefinition {
   showPaymentBadges: boolean;
 }
 
+function formatXAF(amount: number): string {
+  return `XAF ${amount.toLocaleString('en-US')}`;
+}
+
 export const PLANS: PlanDefinition[] = [
   {
     name: 'starter',
     displayName: 'Free',
-    price: 'XAF 3,000',
+    price: formatXAF(PLAN_PRICES_XAF.starter),
     priceSuffix: null,
     billingNote: 'One-time payment',
     features: [
@@ -38,7 +43,7 @@ export const PLANS: PlanDefinition[] = [
   {
     name: 'professional',
     displayName: 'Professional',
-    price: 'XAF 6,000',
+    price: formatXAF(PLAN_PRICES_XAF.professional),
     priceSuffix: '/month',
     billingNote: 'Billed monthly',
     features: [
@@ -57,7 +62,7 @@ export const PLANS: PlanDefinition[] = [
   {
     name: 'elite',
     displayName: 'Elite',
-    price: 'XAF 12,000',
+    price: formatXAF(PLAN_PRICES_XAF.elite),
     priceSuffix: '/month',
     billingNote: 'Billed monthly',
     features: [
@@ -82,17 +87,17 @@ export const PLAN_MODAL_DISPLAY: Record<
 > = {
   starter: {
     label: 'Prezence Free',
-    price: 'XAF 3,000 (one-time)',
+    price: `${formatXAF(PLAN_PRICES_XAF.starter)} (one-time)`,
     priceColor: '#1a1a2e',
   },
   professional: {
     label: 'Prezence Professional',
-    price: 'XAF 6,000/month',
+    price: `${formatXAF(PLAN_PRICES_XAF.professional)}/month`,
     priceColor: '#0f6e56',
   },
   elite: {
     label: 'Prezence Elite',
-    price: 'XAF 12,000/month',
+    price: `${formatXAF(PLAN_PRICES_XAF.elite)}/month`,
     priceColor: '#5b2d8e',
   },
 };

@@ -17,6 +17,15 @@ export interface JobUpdatePayload {
   errorMessage?: string;
 }
 
+export interface NotificationPayload {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  action_url: string | null;
+  created_at: string;
+}
+
 @WebSocketGateway({
   namespace: '/events',
   cors: {
@@ -61,5 +70,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitJobUpdate(userId: string, payload: JobUpdatePayload): void {
     this.server.to(`user:${userId}`).emit('job:update', payload);
+  }
+
+  emitNotification(userId: string, payload: NotificationPayload): void {
+    this.server.to(`user:${userId}`).emit('notification:new', payload);
   }
 }
