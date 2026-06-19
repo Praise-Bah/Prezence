@@ -46,35 +46,29 @@ export function useNotifications(initialNotifications: Notification[]) {
   useEffect(() => {
     let cancelled = false;
 
-    void (async () => {
-      const ticket = await fetchTicket();
-      if (cancelled || !ticket) return;
-
-      const socket = io(`${WS_URL}/events`, {
-        auth: { ticket },
-        transports: ['websocket'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-      });
-
-      socketRef.current = socket;
-
-      // Ticket is single-use; fetch a fresh one before each reconnect attempt
-      // so the gateway doesn't reject an already-consumed ticket.
-      socket.on('reconnect_attempt', () => {
+    // auth callback form: Socket.IO v4 resolves this async before every
+    // connection attempt (initial + reconnects), so each attempt gets a
+    // fresh single-use ticket instead of replaying the consumed one.
+    const socket = io(`${WS_URL}/events`, {
+      auth: (cb: (data: object) => void) => {
         void fetchTicket().then((t) => {
-          if (t) socket.auth = { ticket: t };
+          if (!cancelled) cb(t ? { ticket: t } : {});
         });
-      });
+      },
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
 
-      socket.on('notification:new', (payload: WsNotification) => {
-        setNotifications((prev) => [
-          wsNotificationToNotification(payload),
-          ...prev,
-        ]);
-      });
-    })();
+    socketRef.current = socket;
+
+    socket.on('notification:new', (payload: WsNotification) => {
+      setNotifications((prev) => [
+        wsNotificationToNotification(payload),
+        ...prev,
+      ]);
+    });
 
     return () => {
       cancelled = true;
