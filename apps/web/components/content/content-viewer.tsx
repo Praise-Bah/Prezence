@@ -35,6 +35,7 @@ function formatScheduledAt(iso: string): string {
 const STATUS_STYLES: Record<string, string> = {
   scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
   processing: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  dispatched: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
   failed: 'bg-red-50 text-red-700 border-red-200',
   cancelled: 'bg-[#f1f5f9] text-[#717182] border-[#e2e8f0]',
@@ -56,7 +57,9 @@ export function ContentViewer({
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>(initialScheduledPosts);
 
   const canSchedule = userPlan === 'professional' || userPlan === 'elite';
-  const activeScheduled = scheduledPosts.filter((p) => p.status === 'scheduled' || p.status === 'processing');
+  const activeScheduled = scheduledPosts.filter(
+    (p) => p.status === 'scheduled' || p.status === 'processing' || p.status === 'dispatched',
+  );
 
   function copyField(key: string, value: string) {
     void navigator.clipboard.writeText(value);

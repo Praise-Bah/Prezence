@@ -3,7 +3,13 @@
 import type { SupportedPlatform } from '@prezence/types';
 import { api, ApiError } from '../api';
 
-export type ScheduledPostStatus = 'scheduled' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type ScheduledPostStatus =
+  | 'scheduled'
+  | 'processing'
+  | 'dispatched'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 
 export interface ScheduledPost {
   id: string;

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
@@ -29,7 +29,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
   ): Promise<User> {
     const email = profile.emails?.[0]?.value;
-    if (!email) throw new Error('Google did not return an email address');
+    if (!email)
+      throw new UnauthorizedException('Google did not return an email address');
 
     return this.usersService.findOrCreateSocialUser({
       email,

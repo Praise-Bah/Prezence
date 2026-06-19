@@ -17,6 +17,7 @@ import type {
   PlatformPublishJobData,
   SupportedPlatform,
 } from '@prezence/types';
+import { UsersService } from '../auth';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { REDIS_CLIENT } from '../redis';
 import type { SchedulePostDto } from './dto/schedule-post.dto';
@@ -54,6 +55,7 @@ export class ContentService {
     >,
     @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
+    private readonly usersService: UsersService,
   ) {}
 
   async getContent(
@@ -192,10 +194,10 @@ export class ContentService {
 
   async schedulePost(
     userId: string,
-    userPlan: string,
     dto: SchedulePostDto,
   ): Promise<ScheduledPost> {
-    if (!PLAN_SCHEDULE_ACCESS.has(userPlan)) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !PLAN_SCHEDULE_ACCESS.has(user.plan)) {
       throw new ForbiddenException(
         'Content scheduling requires a Professional or Elite plan.',
       );

@@ -38,7 +38,7 @@ export class ContentController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: SchedulePostDto,
   ) {
-    return this.contentService.schedulePost(user.userId, user.plan, dto);
+    return this.contentService.schedulePost(user.userId, dto);
   }
 
   @Delete('schedule/:id')
