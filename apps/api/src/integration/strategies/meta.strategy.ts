@@ -1,15 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
+import type { PlaintextAccessToken } from '../types/credentials';
+import { toPlaintextAccessToken } from '../types/credentials';
 import { BasePublisherStrategy } from './base-publisher.strategy';
+
+interface MetaPageApiResponse {
+  id: string;
+  name: string;
+  access_token: string;
+}
 
 interface MetaPage {
   id: string;
   name: string;
-  access_token: string; // Graph API field name — never log the full MetaPage object
+  access_token: PlaintextAccessToken;
 }
 
 interface MetaPagesResponse {
-  data: MetaPage[];
+  data: MetaPageApiResponse[];
 }
 
 interface MetaPageWithIg {
@@ -60,7 +68,11 @@ export class MetaStrategy extends BasePublisherStrategy {
       throw new Error(`Meta Pages fetch failed: ${res.status} ${err}`);
     }
     const data = (await res.json()) as MetaPagesResponse;
-    return data.data ?? [];
+    return (data.data ?? []).map((page) => ({
+      id: page.id,
+      name: page.name,
+      access_token: toPlaintextAccessToken(page.access_token),
+    }));
   }
 
   private async publishToFacebookPage(

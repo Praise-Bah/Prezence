@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { EventsGateway } from '../events';
 import { NotificationService } from './notification.service';
 import { Notification } from './entities/notification.entity';
 
 const mockQueue = { add: jest.fn().mockResolvedValue(undefined) };
+const mockEventsGateway = { emitNotification: jest.fn() };
 
 const mockNotification: Partial<Notification> = {
   id: 'notif-1',
@@ -35,6 +37,7 @@ describe('NotificationService', () => {
         NotificationService,
         { provide: getQueueToken(QUEUE_NAMES.email), useValue: mockQueue },
         { provide: getRepositoryToken(Notification), useValue: mockRepo },
+        { provide: EventsGateway, useValue: mockEventsGateway },
       ],
     }).compile();
 
@@ -139,6 +142,25 @@ describe('NotificationService', () => {
       expect(mockRepo.save).toHaveBeenCalled();
     });
 
+    it('emits notification:new via EventsGateway after saving', async () => {
+      await service.createNotification({
+        userId: 'user-1',
+        type: 'billing',
+        title: 'Subscription active!',
+        body: 'Your plan is now active.',
+        actionUrl: '/billing',
+      });
+
+      expect(mockEventsGateway.emitNotification).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({
+          id: 'notif-1',
+          type: 'billing',
+          title: 'Test',
+        }),
+      );
+    });
+
     it('stores null actionUrl when omitted', async () => {
       await service.createNotification({
         userId: 'user-1',
@@ -180,6 +202,18 @@ describe('NotificationService', () => {
       mockRepo.update.mockResolvedValueOnce({ affected: 0 });
       const result = await service.markRead('notif-1', 'other-user');
       expect(result).toEqual({ updated: false });
+    });
+  });
+
+  describe('markAllRead', () => {
+    it('marks all unread notifications for the user', async () => {
+      mockRepo.update.mockResolvedValueOnce({ affected: 3 });
+      const result = await service.markAllRead('user-1');
+      expect(result).toEqual({ updated: 3 });
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        { userId: 'user-1', isRead: false },
+        { isRead: true },
+      );
     });
   });
 });

@@ -11,6 +11,7 @@ import {
 import { Button } from '../ui/button';
 import { Tabs, type TabItem } from '../ui/tabs';
 import { formatRelativeTime } from '../../lib/format-relative-time';
+import { useNotifications } from '../../lib/use-notifications';
 import { cn } from '../../lib/utils';
 
 export interface Notification {
@@ -86,7 +87,7 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ initialNotifications }: NotificationsPanelProps) {
-  const [items, setItems] = useState(initialNotifications);
+  const { notifications: items, markAllRead } = useNotifications(initialNotifications);
   const [activeTab, setActiveTab] = useState('all');
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -97,10 +98,6 @@ export function NotificationsPanel({ initialNotifications }: NotificationsPanelP
       return notificationCategory(item.type) === activeTab;
     });
   }, [activeTab, dismissed, items]);
-
-  const markAllRead = (): void => {
-    setItems((prev) => prev.map((item) => ({ ...item, read: true })));
-  };
 
   const dismiss = (id: string): void => {
     setDismissed((prev) => new Set(prev).add(id));
@@ -201,7 +198,8 @@ interface ApiNotification {
   type: string;
   title: string;
   body: string;
-  read: boolean;
+  read?: boolean;
+  is_read?: boolean;
   created_at?: string;
   createdAt?: string;
 }
@@ -212,7 +210,7 @@ export function mapApiNotification(raw: ApiNotification): Notification {
     type: raw.type,
     title: raw.title,
     body: raw.body,
-    read: raw.read,
+    read: raw.read ?? raw.is_read ?? false,
     created_at: raw.created_at ?? raw.createdAt ?? new Date().toISOString(),
   };
 }

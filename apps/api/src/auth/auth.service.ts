@@ -48,7 +48,7 @@ export interface SanitizedUser {
   email: string;
   role: string;
   plan: string;
-  countryCode: string;
+  countryCode: string | null;
   language: string;
   name: string | null;
   bio: string | null;
