@@ -470,11 +470,19 @@ describe('AuthService', () => {
         user: mockUser,
       };
 
-      it('succeeds with a valid unused non-expired token', async () => {
-        resetTokenRepo.findOne.mockResolvedValue(validRecord);
+      beforeEach(() => {
+        resetTokenRepo.update.mockResolvedValue({
+          affected: 1,
+          raw: [],
+          generatedMaps: [],
+        });
         usersService.updatePasswordHash = jest
           .fn()
           .mockResolvedValue(undefined);
+      });
+
+      it('succeeds with a valid unused non-expired token', async () => {
+        resetTokenRepo.findOne.mockResolvedValue(validRecord);
         (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
 
         const result = await service.resetPassword({
@@ -514,25 +522,24 @@ describe('AuthService', () => {
         ).rejects.toBeInstanceOf(BadRequestException);
       });
 
-      it('throws BadRequestException when token was already used', async () => {
-        resetTokenRepo.findOne.mockResolvedValue({
-          ...validRecord,
-          usedAt: new Date(Date.now() - 60_000),
+      it('throws BadRequestException when token was already consumed (atomic update wins)', async () => {
+        resetTokenRepo.findOne.mockResolvedValue(validRecord);
+        resetTokenRepo.update.mockResolvedValue({
+          affected: 0,
+          raw: [],
+          generatedMaps: [],
         });
 
         await expect(
           service.resetPassword({
-            token: 'used-token',
+            token: 'raced-token',
             newPassword: 'NewPass1!',
           }),
         ).rejects.toBeInstanceOf(BadRequestException);
       });
 
-      it('marks token as used after successful reset', async () => {
+      it('atomically marks token used using id + usedAt IS NULL criteria', async () => {
         resetTokenRepo.findOne.mockResolvedValue(validRecord);
-        usersService.updatePasswordHash = jest
-          .fn()
-          .mockResolvedValue(undefined);
         (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
 
         await service.resetPassword({
@@ -541,16 +548,16 @@ describe('AuthService', () => {
         });
 
         expect(resetTokenRepo.update).toHaveBeenCalledWith(
-          { id: validRecord.id },
+          expect.objectContaining({
+            id: validRecord.id,
+            usedAt: expect.objectContaining({ _type: 'isNull' }),
+          }),
           { usedAt: expect.any(Date) },
         );
       });
 
       it('revokes all refresh tokens after successful reset', async () => {
         resetTokenRepo.findOne.mockResolvedValue(validRecord);
-        usersService.updatePasswordHash = jest
-          .fn()
-          .mockResolvedValue(undefined);
         (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
 
         await service.resetPassword({
