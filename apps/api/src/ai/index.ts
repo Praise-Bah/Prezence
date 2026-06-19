@@ -4,5 +4,8 @@ export { PromptRegistryService } from './services/prompt-registry.service';
 export { ModelRouterService } from './services/model-router.service';
 export { AiUsageLog } from './entities/ai-usage-log.entity';
 export { PromptRegistry } from './entities/prompt-registry.entity';
+export { ChatSession } from './entities/chat-session.entity';
+export { ChatMessage } from './entities/chat-message.entity';
 export type { OpenRouterMessage } from './services/model-router.service';
 export type { AiTask } from './services/ai-usage.service';
+export type { ChatRole } from './entities/chat-message.entity';

@@ -10,7 +10,7 @@ import {
 } from 'react';
 import Image from 'next/image';
 import { ArrowUp, Paperclip, Sparkles } from 'lucide-react';
-import { sendChatMessage } from '../../lib/actions/ai.actions';
+import { sendChatMessage, getChatHistory } from '../../lib/actions/ai.actions';
 import { cn } from '../../lib/utils';
 
 const LOGO_GRADIENT =
@@ -38,6 +38,7 @@ interface ChatMessage {
 
 interface AiChatProps {
   userDisplayName: string;
+  platform?: string;
 }
 
 function getGreeting(): string {
@@ -93,7 +94,7 @@ function TypingIndicator() {
   );
 }
 
-export function AiChat({ userDisplayName }: AiChatProps) {
+export function AiChat({ userDisplayName, platform = 'general' }: AiChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -101,6 +102,22 @@ export function AiChat({ userDisplayName }: AiChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const hasMessages = messages.length > 0;
+
+  // Load persisted history on mount.
+  useEffect(() => {
+    getChatHistory(platform).then((history) => {
+      if (history.length === 0) return;
+      setMessages(
+        history.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          createdAt: new Date(m.createdAt),
+        })),
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const resizeTextarea = useCallback((): void => {
     const el = textareaRef.current;
@@ -134,7 +151,7 @@ export function AiChat({ userDisplayName }: AiChatProps) {
       setInput('');
       setIsLoading(true);
 
-      const result = await sendChatMessage(trimmed);
+      const result = await sendChatMessage(trimmed, undefined, platform);
 
       if ('error' in result) {
         setMessages((prev) => [
@@ -160,7 +177,7 @@ export function AiChat({ userDisplayName }: AiChatProps) {
 
       setIsLoading(false);
     },
-    [isLoading],
+    [isLoading, platform],
   );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
