@@ -1,9 +1,10 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { UsersService } from '../auth';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { REDIS_CLIENT } from '../redis';
 import { ContentService } from './content.service';
@@ -52,14 +53,42 @@ describe('ContentService', () => {
   let interviewRepo: jest.Mocked<Repository<InterviewResponse>>;
   let redis: { get: jest.Mock; del: jest.Mock; exists: jest.Mock };
   let queue: { add: jest.Mock };
+  let scheduleQueue: {
+    add: jest.Mock;
+    getJob: jest.Mock;
+    getDelayed: jest.Mock;
+  };
+  let scheduleRepo: {
+    create: jest.Mock;
+    save: jest.Mock;
+    findOne: jest.Mock;
+    find: jest.Mock;
+    update: jest.Mock;
+  };
+  let usersService: { findById: jest.Mock };
 
   beforeEach(async () => {
+    usersService = { findById: jest.fn() };
     redis = {
       get: jest.fn().mockResolvedValue(null),
       del: jest.fn().mockResolvedValue(1),
       exists: jest.fn().mockResolvedValue(0),
     };
     queue = { add: jest.fn().mockResolvedValue({ id: 'job-uuid' }) };
+    scheduleQueue = {
+      add: jest.fn().mockResolvedValue({ id: 'sched-job-uuid' }),
+      getJob: jest.fn(),
+      getDelayed: jest.fn().mockResolvedValue([]),
+    };
+    scheduleRepo = {
+      create: jest.fn((data: Partial<ScheduledPost>) => data),
+      save: jest.fn((data: Partial<ScheduledPost>) =>
+        Promise.resolve({ id: 'post-uuid', ...data }),
+      ),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      update: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -78,13 +107,7 @@ describe('ContentService', () => {
         },
         {
           provide: getRepositoryToken(ScheduledPost),
-          useValue: {
-            create: jest.fn(),
-            save: jest.fn(),
-            findOne: jest.fn(),
-            find: jest.fn(),
-            update: jest.fn(),
-          },
+          useValue: scheduleRepo,
         },
         {
           provide: getQueueToken(QUEUE_NAMES.content_generation),
@@ -92,13 +115,10 @@ describe('ContentService', () => {
         },
         {
           provide: getQueueToken(QUEUE_NAMES.content_schedule),
-          useValue: {
-            add: jest.fn().mockResolvedValue({ id: 'sched-job-uuid' }),
-            getJob: jest.fn(),
-            getDelayed: jest.fn().mockResolvedValue([]),
-          },
+          useValue: scheduleQueue,
         },
         { provide: REDIS_CLIENT, useValue: redis },
+        { provide: UsersService, useValue: usersService },
       ],
     }).compile();
 
@@ -180,6 +200,32 @@ describe('ContentService', () => {
       await expect(
         service.regenerate('user-uuid', 'linkedin'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('schedulePost', () => {
+    it('allows scheduling when DB plan is paid, regardless of JWT claim', async () => {
+      usersService.findById.mockResolvedValue({ plan: 'professional' });
+      profileRepo.findOne.mockResolvedValue(mockProfile());
+
+      const result = await service.schedulePost('user-uuid', {
+        platform: 'linkedin',
+        scheduledAt: new Date(Date.now() + 60_000).toISOString(),
+      });
+
+      expect(usersService.findById).toHaveBeenCalledWith('user-uuid');
+      expect(result.id).toBe('post-uuid');
+    });
+
+    it('throws ForbiddenException when DB plan is free', async () => {
+      usersService.findById.mockResolvedValue({ plan: 'free' });
+
+      await expect(
+        service.schedulePost('user-uuid', {
+          platform: 'linkedin',
+          scheduledAt: new Date(Date.now() + 60_000).toISOString(),
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 });
