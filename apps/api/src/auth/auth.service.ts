@@ -262,6 +262,10 @@ export class AuthService {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) return GENERIC; // Don't reveal whether the email exists
 
+    // Invalidate any previous unused tokens for this user before issuing a new one.
+    // Prevents a prior token being used to override a freshly-changed password.
+    await this.resetTokenRepository.delete({ userId: user.id, usedAt: IsNull() });
+
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes

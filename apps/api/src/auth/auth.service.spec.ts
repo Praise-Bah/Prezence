@@ -107,6 +107,7 @@ describe('AuthService', () => {
             create: jest.fn(),
             save: jest.fn(),
             update: jest.fn(),
+            delete: jest.fn().mockResolvedValue({ affected: 1 }),
           },
         },
         {
@@ -443,6 +444,19 @@ describe('AuthService', () => {
         tokenHash: string;
       };
       expect(savedArg.tokenHash).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it('deletes existing unused tokens before issuing a new one', async () => {
+      usersService.findByEmail.mockResolvedValue(mockUser);
+      resetTokenRepo.create.mockReturnValue({} as PasswordResetToken);
+      resetTokenRepo.save.mockResolvedValue({} as PasswordResetToken);
+
+      await service.forgotPassword({ email: 'a@b.com' });
+
+      expect(resetTokenRepo.delete).toHaveBeenCalledWith({
+        userId: mockUser.id,
+        usedAt: expect.objectContaining({ _type: 'isNull' }),
+      });
     });
 
     describe('resetPassword', () => {
