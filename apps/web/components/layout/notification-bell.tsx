@@ -4,8 +4,12 @@ import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export function NotificationBell() {
-  const [count, setCount] = useState(0);
+interface NotificationBellProps {
+  initialCount?: number;
+}
+
+export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
+  const [count, setCount] = useState(initialCount);
 
   useEffect(() => {
     fetch('/api/notifications/unread')

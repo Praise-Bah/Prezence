@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { EventsGateway } from '../events/events.gateway';
 import { Notification } from './entities/notification.entity';
 import type { EmailType } from './email-templates';
 
@@ -30,10 +31,11 @@ export class NotificationService {
     private readonly emailQueue: Queue<EmailJobData>,
     @InjectRepository(Notification)
     private readonly notificationRepo: Repository<Notification>,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async createNotification(input: CreateNotificationInput): Promise<void> {
-    await this.notificationRepo.save(
+    const saved = await this.notificationRepo.save(
       this.notificationRepo.create({
         userId: input.userId,
         type: input.type,
@@ -42,6 +44,15 @@ export class NotificationService {
         actionUrl: input.actionUrl ?? null,
       }),
     );
+
+    this.eventsGateway.emitNotification(input.userId, {
+      id: saved.id,
+      type: saved.type,
+      title: saved.title,
+      body: saved.body,
+      action_url: saved.actionUrl,
+      created_at: saved.createdAt.toISOString(),
+    });
   }
 
   async listForUser(userId: string): Promise<Notification[]> {

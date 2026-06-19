@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { AuthModule } from '../auth';
+import { EventsModule } from '../events/events.module';
 import { Notification } from './entities/notification.entity';
 import { EmailProcessor } from './jobs/email.processor';
 import { NotificationController } from './notification.controller';
@@ -13,6 +14,7 @@ import { NotificationService } from './notification.service';
     TypeOrmModule.forFeature([Notification]),
     BullModule.registerQueue({ name: QUEUE_NAMES.email }),
     AuthModule,
+    EventsModule,
   ],
   controllers: [NotificationController],
   providers: [NotificationService, EmailProcessor],
