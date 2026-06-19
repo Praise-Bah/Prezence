@@ -6,7 +6,7 @@ import { ContentModule } from '../content';
 import { EventsModule } from '../events';
 import { NotificationModule } from '../notification';
 import { RedisModule } from '../redis';
-import { AutomationJobEntity } from './entities/automation-job.entity';
+import { SharedModule } from '../shared';
 import { PlatformConnection } from './entities/platform-connection.entity';
 import { AutomationProcessor } from './jobs/automation.processor';
 import { WebhookRetryProcessor } from './jobs/webhook-retry.processor';
@@ -23,11 +23,12 @@ import { IntegrationService } from './integration.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PlatformConnection, AutomationJobEntity]),
+    TypeOrmModule.forFeature([PlatformConnection]),
     BullModule.registerQueue(
       { name: QUEUE_NAMES.automation },
       { name: QUEUE_NAMES.webhook_retry },
     ),
+    SharedModule,
     ContentModule,
     EventsModule,
     NotificationModule,
