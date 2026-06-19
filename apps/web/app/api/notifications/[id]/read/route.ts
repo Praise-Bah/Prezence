@@ -4,7 +4,7 @@ const API_BASE = process.env.API_URL ?? 'http://localhost:3001';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const token = request.cookies.get('prezence_at')?.value;
 
@@ -12,8 +12,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id } = await params;
+
   try {
-    const res = await fetch(`${API_BASE}/notifications/${params.id}/read`, {
+    const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
     });
