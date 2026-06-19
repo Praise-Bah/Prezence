@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { AuthModule } from '../auth';
-import { EventsModule } from '../events/events.module';
+import { EventsModule } from '../events';
 import { Notification } from './entities/notification.entity';
 import { EmailProcessor } from './jobs/email.processor';
 import { NotificationController } from './notification.controller';

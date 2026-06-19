@@ -198,7 +198,8 @@ interface ApiNotification {
   type: string;
   title: string;
   body: string;
-  read: boolean;
+  read?: boolean;
+  is_read?: boolean;
   created_at?: string;
   createdAt?: string;
 }
@@ -209,7 +210,7 @@ export function mapApiNotification(raw: ApiNotification): Notification {
     type: raw.type,
     title: raw.title,
     body: raw.body,
-    read: raw.read,
+    read: raw.read ?? raw.is_read ?? false,
     created_at: raw.created_at ?? raw.createdAt ?? new Date().toISOString(),
   };
 }

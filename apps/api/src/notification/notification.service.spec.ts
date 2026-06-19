@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { EventsGateway } from '../events/events.gateway';
+import { EventsGateway } from '../events';
 import { NotificationService } from './notification.service';
 import { Notification } from './entities/notification.entity';
 
@@ -202,6 +202,18 @@ describe('NotificationService', () => {
       mockRepo.update.mockResolvedValueOnce({ affected: 0 });
       const result = await service.markRead('notif-1', 'other-user');
       expect(result).toEqual({ updated: false });
+    });
+  });
+
+  describe('markAllRead', () => {
+    it('marks all unread notifications for the user', async () => {
+      mockRepo.update.mockResolvedValueOnce({ affected: 3 });
+      const result = await service.markAllRead('user-1');
+      expect(result).toEqual({ updated: 3 });
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        { userId: 'user-1', isRead: false },
+        { isRead: true },
+      );
     });
   });
 });

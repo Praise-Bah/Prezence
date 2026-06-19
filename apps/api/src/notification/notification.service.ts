@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { EventsGateway } from '../events/events.gateway';
+import { EventsGateway } from '../events';
 import { Notification } from './entities/notification.entity';
 import type { EmailType } from './email-templates';
 
@@ -72,6 +72,14 @@ export class NotificationService {
       { isRead: true },
     );
     return { updated: (result.affected ?? 0) > 0 };
+  }
+
+  async markAllRead(userId: string): Promise<{ updated: number }> {
+    const result = await this.notificationRepo.update(
+      { userId, isRead: false },
+      { isRead: true },
+    );
+    return { updated: result.affected ?? 0 };
   }
 
   async sendWelcome(userId: string): Promise<void> {

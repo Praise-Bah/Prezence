@@ -79,10 +79,21 @@ export function useNotifications(initialNotifications: Notification[]) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
+    void fetch(`/api/notifications/${id}/read`, { method: 'PATCH' }).catch(() => {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: false } : n)),
+      );
+    });
   };
 
   const markAllRead = (): void => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev) => {
+      const before = prev;
+      void fetch('/api/notifications/read-all', { method: 'PATCH' }).catch(() => {
+        setNotifications(before);
+      });
+      return prev.map((n) => ({ ...n, read: true }));
+    });
   };
 
   return { notifications, unreadCount, markRead, markAllRead };
