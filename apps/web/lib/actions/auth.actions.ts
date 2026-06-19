@@ -94,6 +94,42 @@ export async function logoutAction(): Promise<void> {
   redirect('/login');
 }
 
+export async function forgotPasswordAction(email: string): Promise<ActionResult> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { error: 'Could not process your request. Please try again.' };
+    return { success: 'If that email exists, a reset link has been sent.' };
+  } catch {
+    return { error: 'Could not connect to the server. Please try again.' };
+  }
+}
+
+export async function resetPasswordAction(
+  token: string,
+  newPassword: string,
+): Promise<ActionResult> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { message?: string };
+      return { error: body.message ?? 'Failed to reset password.' };
+    }
+    return { success: 'Password reset successfully. Redirecting to login…' };
+  } catch {
+    return { error: 'Could not connect to the server. Please try again.' };
+  }
+}
+
 export interface UpdateProfileData {
   name?: string;
   bio?: string;

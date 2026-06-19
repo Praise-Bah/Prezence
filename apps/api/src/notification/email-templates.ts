@@ -1,5 +1,6 @@
 export type EmailType =
   | 'user_registered'
+  | 'password_reset'
   | 'payment_initiated'
   | 'payment_approved'
   | 'payment_provisional'
@@ -49,6 +50,18 @@ export function renderTemplate(
           <h2>Welcome to Prezence, ${s(data.name, 'there')}!</h2>
           <p>Your account has been created. Start building your personal brand across Cameroon and sub-Saharan Africa.</p>
           <p><a href="https://prezence.app/dashboard" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Go to your dashboard</a></p>
+        `),
+      };
+
+    case 'password_reset':
+      return {
+        subject: 'Reset your Prezence password',
+        html: base(`
+          <h2>Password reset request</h2>
+          <p>Hi ${s(data.name, 'there')},</p>
+          <p>We received a request to reset your Prezence password. Click the link below to set a new password — this link expires in <strong>15 minutes</strong>.</p>
+          <p><a href="${s(data.resetUrl)}" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Reset my password</a></p>
+          <p style="color:#6b7280;font-size:14px">If you didn't request this, you can safely ignore this email. Your password has not been changed.</p>
         `),
       };
 

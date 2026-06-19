@@ -1,10 +1,12 @@
-import { randomUUID, createHash } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -14,9 +16,12 @@ import type { Queue } from 'bullmq';
 import { IsNull, Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import type { User } from './entities/user.entity';
 import type { JwtPayload, RefreshTokenPayload } from './jwt-payload.interface';
@@ -61,6 +66,8 @@ export class AuthService {
     private readonly lockoutService: LockoutService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(PasswordResetToken)
+    private readonly resetTokenRepository: Repository<PasswordResetToken>,
     @InjectQueue(QUEUE_NAMES.email)
     private readonly emailQueue: Queue,
   ) {}
@@ -223,6 +230,56 @@ export class AuthService {
     );
 
     return { message: 'Password changed. Please log in again.' };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const GENERIC = { message: 'If that email exists, a reset link has been sent.' };
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user) return GENERIC; // Don't reveal whether the email exists
+
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await this.resetTokenRepository.save(
+      this.resetTokenRepository.create({ userId: user.id, tokenHash, expiresAt }),
+    );
+
+    const appUrl = this.configService.get<string>('APP_URL') ?? 'https://prezence.app';
+    const resetUrl = `${appUrl}/auth/reset-password?token=${rawToken}`;
+
+    this.emailQueue
+      .add('send', {
+        userId: user.id,
+        type: 'password_reset',
+        data: { resetUrl },
+      }, { attempts: 3, backoff: { type: 'exponential', delay: 5000 } })
+      .catch((err: unknown) => {
+        this.logger.warn(`Failed to enqueue password reset email: ${String(err)}`);
+      });
+
+    return GENERIC;
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const tokenHash = createHash('sha256').update(dto.token).digest('hex');
+    const record = await this.resetTokenRepository.findOne({
+      where: { tokenHash },
+    });
+
+    if (!record || record.usedAt !== null || record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const newHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
+    await this.usersService.updatePasswordHash(record.userId, newHash);
+    await this.resetTokenRepository.update({ id: record.id }, { usedAt: new Date() });
+    await this.refreshTokenRepository.update(
+      { userId: record.userId, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+
+    return { message: 'Password reset successfully. Please log in.' };
   }
 
   private hashToken(token: string): string {
