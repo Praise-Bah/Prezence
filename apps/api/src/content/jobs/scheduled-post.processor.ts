@@ -7,8 +7,7 @@ import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import type { PlatformPublishJobData } from '@prezence/types';
 import { ScheduledPost } from '../entities/scheduled-post.entity';
-// Direct path import breaks the barrel circular cycle; see content.module.ts comment.
-import { AutomationJobEntity } from '../../integration/entities/automation-job.entity';
+import { AutomationJobEntity } from '../../shared';
 
 type ScheduledJobData = PlatformPublishJobData & { scheduledPostId: string };
 

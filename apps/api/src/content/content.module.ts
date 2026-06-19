@@ -5,10 +5,7 @@ import { QUEUE_NAMES } from '@prezence/config';
 import { AuthModule } from '../auth';
 import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
 import { RedisModule } from '../redis';
-// AutomationJobEntity: direct path import to avoid circular barrel cycle
-// (integration/index → integration.module → content/index → content.module → [integration barrel = cycle])
-// Long-term fix: move entity to a SharedModule.
-import { AutomationJobEntity } from '../integration/entities/automation-job.entity';
+import { SharedModule } from '../shared';
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
 import { ScheduledPost } from './entities/scheduled-post.entity';
@@ -21,7 +18,6 @@ import { ScheduledPostProcessor } from './jobs/scheduled-post.processor';
       MarketScore,
       InterviewResponse,
       ScheduledPost,
-      AutomationJobEntity,
     ]),
     BullModule.registerQueue(
       { name: QUEUE_NAMES.content_generation },
@@ -30,6 +26,7 @@ import { ScheduledPostProcessor } from './jobs/scheduled-post.processor';
     ),
     RedisModule,
     AuthModule,
+    SharedModule,
   ],
   controllers: [ContentController],
   providers: [ContentService, ScheduledPostProcessor],

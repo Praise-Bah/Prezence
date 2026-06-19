@@ -60,6 +60,14 @@ export function useNotifications(initialNotifications: Notification[]) {
 
       socketRef.current = socket;
 
+      // Ticket is single-use; fetch a fresh one before each reconnect attempt
+      // so the gateway doesn't reject an already-consumed ticket.
+      socket.on('reconnect_attempt', () => {
+        void fetchTicket().then((t) => {
+          if (t) socket.auth = { ticket: t };
+        });
+      });
+
       socket.on('notification:new', (payload: WsNotification) => {
         setNotifications((prev) => [
           wsNotificationToNotification(payload),
