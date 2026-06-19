@@ -3,6 +3,7 @@
 export const AI_MODELS = {
   generation: 'anthropic/claude-sonnet-4-6',
   qa:         'google/gemini-flash-1.5-8b',
+  scoring:    'google/gemini-flash-1.5-8b',
   embedding:  'openai/text-embedding-ada-002',
 } as const;
 

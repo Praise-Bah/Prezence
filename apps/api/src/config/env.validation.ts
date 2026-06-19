@@ -79,6 +79,30 @@ class EnvironmentVariables {
   SMARTPROXY_PASSWORD?: string;
 
   @IsOptional()
+  @IsString()
+  LINKEDIN_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  LINKEDIN_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  META_APP_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  META_APP_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  FRONTEND_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  API_URL?: string;
+
+  @IsOptional()
   @IsIn(['development', 'test', 'production'])
   NODE_ENV?: string;
 

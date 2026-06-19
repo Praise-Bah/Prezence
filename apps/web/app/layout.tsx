@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
   title: { default: 'Prezence', template: '%s | Prezence' },
@@ -12,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">{children}</body>
     </html>
   );

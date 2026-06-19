@@ -1,13 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useActionState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Loader2, Sparkles } from 'lucide-react';
 import { submitInterviewAction, type InterviewState } from '../../lib/actions/intelligence.actions';
+import { useJobStatus } from '../../lib/use-job-status';
 import { Button } from '../ui/button';
 import { Input, Textarea } from '../ui/input';
 import { PlatformIcon } from '../content/platform-icon';
 import { cn, formatPlatformName } from '../../lib/utils';
+
+function JobStatusScreen({ jobId, platform }: { jobId: string; platform: string }) {
+  const router = useRouter();
+  const { status } = useJobStatus(jobId);
+
+  useEffect(() => {
+    if (status === 'completed') {
+      router.push(`/content/${platform}`);
+    }
+  }, [status, platform, router]);
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 rounded-2xl border border-[#e2e8f0] bg-white p-12 shadow-sm">
+      {status === 'failed' ? (
+        <>
+          <p className="text-lg font-medium text-red-600">Generation failed</p>
+          <p className="text-sm text-[#717182]">Something went wrong. Please go back and try again.</p>
+          <Button variant="secondary" onClick={() => router.push(`/interview/${platform}`)}>
+            Try again
+          </Button>
+        </>
+      ) : (
+        <>
+          <Loader2 className="h-10 w-10 animate-spin text-[#6366f1]" />
+          <p className="text-lg font-medium text-[#1a1a2e]">
+            {status === 'running' ? 'Generating your profile…' : 'Starting generation…'}
+          </p>
+          <p className="text-sm text-[#717182]">This takes 30–60 seconds. You&apos;ll be redirected automatically.</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 const initial: InterviewState = {};
 
@@ -90,6 +125,10 @@ interface InterviewFormProps {
 export function InterviewForm({ platform }: InterviewFormProps) {
   const [state, action, isPending] = useActionState(submitInterviewAction, initial);
   const [step, setStep] = useState(0);
+
+  if (state.jobId && state.platform) {
+    return <JobStatusScreen jobId={state.jobId} platform={state.platform} />;
+  }
 
   const currentStep = STEPS[step];
   const progress = ((step + 1) / STEPS.length) * 100;

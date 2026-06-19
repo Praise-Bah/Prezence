@@ -6,7 +6,7 @@ import { AiUsageLog } from '../entities/ai-usage-log.entity';
 import type { OpenRouterMessage } from './model-router.service';
 import { ModelRouterService } from './model-router.service';
 
-export type AiTask = 'generation' | 'qa';
+export type AiTask = 'generation' | 'qa' | 'scoring';
 
 @Injectable()
 export class AiUsageService {
