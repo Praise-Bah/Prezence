@@ -1,5 +1,5 @@
 import {
-  ForbiddenException,
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -12,7 +12,7 @@ import type { Express } from 'express';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import type { DocumentCategory } from '@prezence/types';
-import { R2StorageService } from '../billing/r2-storage.service';
+import { R2StorageService } from '../billing';
 import { UserDocument } from './entities/user-document.entity';
 import type { ExtractionJobData } from './jobs/extraction.worker';
 
@@ -44,7 +44,7 @@ function parseCategory(raw?: string): DocumentCategory | null {
   if (!raw?.trim()) return null;
   const value = raw.trim() as DocumentCategory;
   if (!ALLOWED_CATEGORIES.has(value)) {
-    throw new ForbiddenException(`Invalid document category "${raw}".`);
+    throw new BadRequestException(`Invalid document category "${raw}".`);
   }
   return value;
 }
@@ -67,23 +67,23 @@ export class DocumentsService {
     categoryRaw?: string,
   ): Promise<UserDocument> {
     if (!file) {
-      throw new ForbiddenException('No file uploaded.');
+      throw new BadRequestException('No file uploaded.');
     }
 
     const category = parseCategory(categoryRaw);
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-      throw new ForbiddenException(
+      throw new BadRequestException(
         `File type "${file.mimetype}" is not supported. Allowed: PDF, DOCX, JPEG, PNG, WebP.`,
       );
     }
 
     if (file.size > MAX_FILE_BYTES) {
-      throw new ForbiddenException(`File size exceeds the 20 MB limit.`);
+      throw new BadRequestException(`File size exceeds the 20 MB limit.`);
     }
 
     const count = await this.docRepo.count({ where: { userId } });
     if (count >= MAX_DOCUMENTS_PER_USER) {
-      throw new ForbiddenException(
+      throw new BadRequestException(
         `Maximum of ${MAX_DOCUMENTS_PER_USER} documents per user reached.`,
       );
     }
@@ -95,7 +95,7 @@ export class DocumentsService {
           where: { userId, category },
         });
         if (categoryCount >= categoryLimit) {
-          throw new ForbiddenException(
+          throw new BadRequestException(
             `Maximum of ${categoryLimit} documents for "${category}" reached.`,
           );
         }
@@ -128,7 +128,6 @@ export class DocumentsService {
         userId,
         r2Key,
         mimeType: file.mimetype,
-        fileBuffer: Array.from(file.buffer),
       },
       {
         attempts: 3,

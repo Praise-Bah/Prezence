@@ -95,7 +95,15 @@ ${editsList}`;
     });
 
     const clean = raw.replace(/```json\n?|\n?```/g, '').trim();
-    const prefs = JSON.parse(clean) as Record<string, unknown>;
+    let prefs: Record<string, unknown>;
+    try {
+      prefs = JSON.parse(clean) as Record<string, unknown>;
+    } catch (err) {
+      this.logger.error(
+        `Voice-learning JSON parse failed for user ${userId}: ${err instanceof Error ? err.message : String(err)}\nRaw response: ${raw.slice(0, 500)}`,
+      );
+      throw err;
+    }
 
     await this.redis.set(
       `voice:prefs:${userId}`,

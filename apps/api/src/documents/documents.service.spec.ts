@@ -1,9 +1,9 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import { R2StorageService } from '../billing/r2-storage.service';
+import { R2StorageService } from '../billing';
 import { DocumentsService } from './documents.service';
 import { UserDocument } from './entities/user-document.entity';
 
@@ -82,20 +82,20 @@ describe('DocumentsService', () => {
     it('rejects unsupported MIME type', async () => {
       await expect(
         service.upload('user-uuid', mockFile({ mimetype: 'text/plain' })),
-      ).rejects.toBeInstanceOf(ForbiddenException);
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('rejects files over 20 MB', async () => {
       await expect(
         service.upload('user-uuid', mockFile({ size: 21 * 1024 * 1024 })),
-      ).rejects.toBeInstanceOf(ForbiddenException);
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('rejects when user already has 20 documents', async () => {
       docRepo.count.mockResolvedValue(20);
       await expect(
         service.upload('user-uuid', mockFile()),
-      ).rejects.toBeInstanceOf(ForbiddenException);
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('uploads to R2, saves to DB, and enqueues extraction job', async () => {

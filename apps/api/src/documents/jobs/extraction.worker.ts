@@ -11,6 +11,7 @@ type PdfParseFunc = (b: Buffer) => Promise<{ text: string }>;
 // pdf-parse 2.x exports a CJS callable — cast to bypass nodenext interop gap
 const pdfParse = pdfParseModule as unknown as PdfParseFunc;
 import { AiUsageService } from '../../ai';
+import { R2StorageService } from '../../billing';
 import { UserDocument } from '../entities/user-document.entity';
 
 export interface ExtractionJobData {
@@ -18,7 +19,7 @@ export interface ExtractionJobData {
   userId: string;
   r2Key: string;
   mimeType: string;
-  fileBuffer: number[]; // Buffer serialised as number array for BullMQ JSON serialisation
+  // fileBuffer removed — worker downloads from R2 to avoid serialising up to 20 MB into Redis
 }
 
 function stripCodeFences(raw: string): string {
@@ -36,18 +37,19 @@ export class ExtractionWorker extends WorkerHost {
   constructor(
     @InjectRepository(UserDocument)
     private readonly docRepo: Repository<UserDocument>,
+    private readonly r2: R2StorageService,
     private readonly aiUsage: AiUsageService,
   ) {
     super();
   }
 
   async process(job: Job<ExtractionJobData>): Promise<void> {
-    const { documentId, userId, mimeType, fileBuffer } = job.data;
+    const { documentId, userId, r2Key, mimeType } = job.data;
 
     await this.docRepo.update(documentId, { status: 'extracting' });
 
     try {
-      const buffer = Buffer.from(fileBuffer);
+      const buffer = await this.r2.downloadBuffer(r2Key);
       const text = await this.extractText(userId, mimeType, buffer);
 
       await this.docRepo.update(documentId, {

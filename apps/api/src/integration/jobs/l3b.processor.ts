@@ -54,7 +54,7 @@ export class L3bProcessor extends WorkerHost {
     });
 
     // Get session cookie: try Redis first, fall back to decrypting from DB
-    const decryptedCookie = await this.getSessionCookie(userId, platform);
+    const sessionCookie = await this.getSessionCookie(userId, platform);
 
     // Build the Skyvern task payload for this platform
     const webhookUrl = this.buildWebhookUrl();
@@ -62,9 +62,10 @@ export class L3bProcessor extends WorkerHost {
       platform,
       userId,
       contentSections,
-      decryptedCookie,
       webhookUrl,
     );
+    // Cookie is passed separately (not in formData) so it stays out of Skyvern's task logs
+    if (sessionCookie) payload.sessionCookie = sessionCookie;
 
     // Start the Skyvern task
     const { task_id: taskId } = await this.skyvernService.runTask(payload);
@@ -167,23 +168,19 @@ export class L3bProcessor extends WorkerHost {
     platform: SupportedPlatform,
     userId: string,
     content: Record<string, string>,
-    cookie: string,
     webhookUrl: string | null,
   ): SkyvernTaskPayload {
-    // Merge cookie into form data so Skyvern can authenticate
-    const contentWithCookie = { ...content, _session_cookie: cookie };
-
     switch (platform) {
       case 'fiverr':
-        return buildFiverrL3bPayload(userId, contentWithCookie, webhookUrl);
+        return buildFiverrL3bPayload(userId, content, webhookUrl);
       case 'linkedin':
-        return buildLinkedInL3bPayload(userId, contentWithCookie, webhookUrl);
+        return buildLinkedInL3bPayload(userId, content, webhookUrl);
       case 'instagram':
-        return buildInstagramL3bPayload(userId, contentWithCookie, webhookUrl);
+        return buildInstagramL3bPayload(userId, content, webhookUrl);
       case 'youtube':
-        return buildYoutubeL3bPayload(userId, contentWithCookie, webhookUrl);
+        return buildYoutubeL3bPayload(userId, content, webhookUrl);
       default:
-        return buildFiverrL3bPayload(userId, contentWithCookie, webhookUrl);
+        return buildFiverrL3bPayload(userId, content, webhookUrl);
     }
   }
 

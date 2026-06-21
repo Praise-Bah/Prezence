@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
+  GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -69,6 +70,17 @@ export class R2StorageService {
     const url = `${this.publicUrl}/${key}`;
     this.logger.log(`Uploaded proof: ${key}`);
     return url;
+  }
+
+  async downloadBuffer(key: string): Promise<Buffer> {
+    const res = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
   }
 
   async delete(key: string): Promise<void> {

@@ -204,14 +204,6 @@ export class IntegrationService {
       return;
     }
 
-    // Idempotency: skip if the L3B worker already completed this job via polling
-    if (job.status === 'completed' || job.status === 'failed') {
-      this.logger.debug(
-        `Skyvern webhook: job ${job.id} already ${job.status} — skipping`,
-      );
-      return;
-    }
-
     if (dto.status === 'completed') {
       let proofUrl: string | null = null;
       if (dto.screenshot_url) {
@@ -222,12 +214,29 @@ export class IntegrationService {
         );
       }
 
-      await this.jobRepo.update(job.id, {
-        status: 'completed',
-        layerUsed: 'L3B',
-        proofUrl,
-        completedAt: new Date(),
-      });
+      // Atomic compare-and-swap: only update if still 'running'.
+      // If the L3B polling loop already wrote 'completed', affected will be 0 and we skip notification.
+      const result = await this.jobRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          status: 'completed',
+          layerUsed: 'L3B',
+          proofUrl,
+          completedAt: new Date(),
+        })
+        .where('id = :id AND status = :status', {
+          id: job.id,
+          status: 'running',
+        })
+        .execute();
+
+      if (!result.affected) {
+        this.logger.debug(
+          `Skyvern webhook: job ${job.id} already finalised by polling — skipping notification`,
+        );
+        return;
+      }
 
       await this.notificationService.createNotification({
         userId: job.userId,
@@ -240,12 +249,27 @@ export class IntegrationService {
       const reason =
         dto.failure_reason ?? `Skyvern task ended with status: ${dto.status}`;
 
-      await this.jobRepo.update(job.id, {
-        status: 'failed',
-        layerUsed: 'L3B',
-        errorMessage: reason,
-        completedAt: new Date(),
-      });
+      const result = await this.jobRepo
+        .createQueryBuilder()
+        .update()
+        .set({
+          status: 'failed',
+          layerUsed: 'L3B',
+          errorMessage: reason,
+          completedAt: new Date(),
+        })
+        .where('id = :id AND status = :status', {
+          id: job.id,
+          status: 'running',
+        })
+        .execute();
+
+      if (!result.affected) {
+        this.logger.debug(
+          `Skyvern webhook: job ${job.id} already finalised by polling — skipping notification`,
+        );
+        return;
+      }
 
       await this.notificationService.createNotification({
         userId: job.userId,

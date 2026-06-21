@@ -28,9 +28,10 @@ jobs:
 
       - name: Check for bundle size override
         id: override
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          if echo "${{ github.event.pull_request.body }}" \
-            | grep -q "bundle-size-override: justified"; then
+          if echo "$PR_BODY" | grep -q "bundle-size-override: justified"; then
             echo "override=true" >> $GITHUB_OUTPUT
           else
             echo "override=false" >> $GITHUB_OUTPUT

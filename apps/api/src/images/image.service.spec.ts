@@ -71,9 +71,9 @@ describe('ImageService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('uploads exactly 12 variants to R2 (5 AVIF + 5 WebP + 2 JPEG)', async () => {
+  it('uploads exactly 13 variants to R2 (5 AVIF + 5 WebP + 2 JPEG + 1 original)', async () => {
     await service.uploadImage(validBuffer, validMime, userId, 'avatar');
-    expect(r2.uploadBuffer).toHaveBeenCalledTimes(12);
+    expect(r2.uploadBuffer).toHaveBeenCalledTimes(13);
   });
 
   it('strips EXIF by calling sharp().rotate() before generating variants', async () => {

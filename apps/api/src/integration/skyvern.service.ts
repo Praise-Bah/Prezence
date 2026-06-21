@@ -7,6 +7,8 @@ export interface SkyvernTaskPayload {
   goal: string;
   formData: Record<string, string>;
   webhookUrl: string | null;
+  /** Session cookie passed as a browser cookie rather than form data to keep it out of Skyvern's task logs. */
+  sessionCookie?: string;
 }
 
 export type SkyvernTaskStatus =
@@ -116,6 +118,20 @@ export class SkyvernService {
         totp_verification_url: null,
         proxy_location: 'RESIDENTIAL',
         max_steps_per_run: 25,
+        ...(payload.sessionCookie
+          ? {
+              navigation_cookies: [
+                {
+                  name: 'session',
+                  value: payload.sessionCookie,
+                  domain: new URL(payload.startUrl).hostname,
+                  path: '/',
+                  httpOnly: true,
+                  secure: true,
+                },
+              ],
+            }
+          : {}),
       }),
       signal: AbortSignal.timeout(30_000),
     }).catch((err: Error) => {

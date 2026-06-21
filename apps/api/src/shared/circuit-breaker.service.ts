@@ -12,11 +12,14 @@ export interface CircuitBreakerOptions {
 export class CircuitBreakerService {
   private readonly logger = new Logger(CircuitBreakerService.name);
 
-  private readonly breakers = new Map<string, CircuitBreaker<any[], any>>();
+  private readonly breakers = new Map<
+    string,
+    CircuitBreaker<unknown[], unknown>
+  >();
 
   private readonly wrappers = new Map<
     string,
-    (...args: any[]) => Promise<any>
+    (...args: unknown[]) => Promise<unknown>
   >();
 
   wrap<TArgs extends unknown[], TResult>(

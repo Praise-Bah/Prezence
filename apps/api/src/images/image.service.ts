@@ -89,11 +89,13 @@ export class ImageService {
       ),
     ]);
 
-    // 5. Upload all variants to R2 in parallel
+    // 5. Upload all variants and the cleaned original to R2 in parallel
     const imageId = randomUUID();
     const baseKey = `images/${userId}/${imageId}`;
+    const originalKey = `${baseKey}/original`;
 
-    const [avifUrls, webpUrls, jpegUrls] = await Promise.all([
+    const [, avifUrls, webpUrls, jpegUrls] = await Promise.all([
+      this.r2.uploadBuffer(originalKey, cleaned, mimeType),
       Promise.all(
         AVIF_WIDTHS.map((w, i) =>
           this.r2.uploadBuffer(
@@ -148,7 +150,7 @@ export class ImageService {
     const record = this.imageRepo.create({
       id: imageId,
       userId,
-      originalKey: `${baseKey}/original`,
+      originalKey,
       baseUrl,
       variants,
       width: origWidth,
