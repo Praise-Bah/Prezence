@@ -93,12 +93,19 @@ export class L3bProcessor extends WorkerHost {
         );
       }
 
-      await this.jobRepo.update(automationJobId, {
-        status: 'completed',
-        layerUsed: 'L3B',
-        proofUrl,
-        completedAt: new Date(),
-      });
+      const successResult = await this.jobRepo
+        .createQueryBuilder()
+        .update()
+        .set({ status: 'completed', layerUsed: 'L3B', proofUrl, completedAt: new Date() })
+        .where('id = :id AND status = :status', { id: automationJobId, status: 'running' })
+        .execute();
+
+      if (!successResult.affected) {
+        this.logger.debug(
+          `L3B polling: job ${automationJobId} already finalised by webhook — skipping notification`,
+        );
+        return;
+      }
 
       this.logger.log(
         `L3B completed for ${platform} job ${automationJobId} — proof: ${proofUrl ?? 'none'}`,
@@ -116,16 +123,23 @@ export class L3bProcessor extends WorkerHost {
       const reason =
         task.failure_reason ?? `Skyvern task ended with status: ${task.status}`;
 
+      const failResult = await this.jobRepo
+        .createQueryBuilder()
+        .update()
+        .set({ status: 'failed', layerUsed: 'L3B', errorMessage: reason, completedAt: new Date() })
+        .where('id = :id AND status = :status', { id: automationJobId, status: 'running' })
+        .execute();
+
+      if (!failResult.affected) {
+        this.logger.debug(
+          `L3B polling: job ${automationJobId} already finalised by webhook — skipping notification`,
+        );
+        return;
+      }
+
       this.logger.warn(
         `L3B ${task.status} for ${platform} job ${automationJobId}: ${reason}`,
       );
-
-      await this.jobRepo.update(automationJobId, {
-        status: 'failed',
-        layerUsed: 'L3B',
-        errorMessage: reason,
-        completedAt: new Date(),
-      });
 
       await this.notificationService.createNotification({
         userId,
