@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { UserDocument } from '@prezence/types';
-import { api } from '../../../lib/api';
-import { OnboardingDocumentsForm } from '../../../components/onboarding/onboarding-documents-form';
+import { api } from '../../../../lib/api';
+import { OnboardingDocumentsForm } from '../../../../components/onboarding/onboarding-documents-form';
 
 export const metadata: Metadata = { title: 'Upload documents — Onboarding' };
 
