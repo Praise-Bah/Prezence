@@ -67,4 +67,7 @@ export class AutomationJobEntity {
 
   @Column({ name: 'completed_at', type: 'timestamptz', nullable: true })
   completedAt!: Date | null;
+
+  @Column({ name: 'skyvern_task_id', nullable: true, type: 'text' })
+  skyvernTaskId!: string | null;
 }

@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { In, Repository } from 'typeorm';
 import { PLAN_PRICES_XAF, QUEUE_NAMES } from '@prezence/config';
+import { ImageService } from '../images';
 import { SubscriptionRequest } from './entities/subscription-request.entity';
 import { PaymentEvent } from './entities/payment-event.entity';
 import type { InitiatePaymentDto } from './dto/initiate-payment.dto';
@@ -32,6 +33,7 @@ export class BillingService {
     @InjectQueue(QUEUE_NAMES.screenshot_screening)
     private readonly screeningQueue: Queue<ScreeningJobData>,
     private readonly r2: R2StorageService,
+    private readonly imageService: ImageService,
     private readonly config: ConfigService,
   ) {}
 
@@ -119,7 +121,12 @@ export class BillingService {
       );
     }
 
-    const screenshotUrl = await this.r2.uploadProof(userId, request.id, file);
+    const { baseUrl: screenshotUrl } = await this.imageService.uploadImage(
+      file.buffer,
+      file.mimetype,
+      userId,
+      'screenshot',
+    );
 
     await this.requestRepo.update(request.id, {
       screenshotUrl,

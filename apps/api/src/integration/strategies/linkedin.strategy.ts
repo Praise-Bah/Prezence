@@ -27,6 +27,7 @@ export class LinkedInStrategy extends BasePublisherStrategy {
     accessToken: string,
     content: Record<string, string>,
     _platform: SupportedPlatform,
+    _userId: string,
   ): Promise<string | null> {
     const postText =
       content['post'] ?? content['headline'] ?? content['summary'];

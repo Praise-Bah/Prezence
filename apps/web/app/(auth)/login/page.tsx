@@ -8,12 +8,13 @@ const OAUTH_ERRORS: Record<string, string> = {
   oauth_no_email: 'Your social account did not share an email address. Please sign in with email.',
 };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const errorKey = typeof searchParams.error === 'string' ? searchParams.error : undefined;
+  const params = await searchParams;
+  const errorKey = typeof params.error === 'string' ? params.error : undefined;
   const oauthError = errorKey ? (OAUTH_ERRORS[errorKey] ?? 'Something went wrong. Please try again.') : undefined;
 
   return (

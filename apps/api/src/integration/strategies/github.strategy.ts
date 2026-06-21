@@ -19,6 +19,7 @@ export class GithubStrategy extends BasePublisherStrategy {
     accessToken: string,
     content: Record<string, string>,
     _platform: SupportedPlatform,
+    _userId: string,
   ): Promise<string | null> {
     const user = await this.apiGet<GithubUser>('/user', accessToken);
 

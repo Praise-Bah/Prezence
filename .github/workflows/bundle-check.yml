@@ -1,0 +1,42 @@
+name: Bundle Size Check
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+
+jobs:
+  bundle-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm build --filter=web
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: Check for bundle size override
+        id: override
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -q "bundle-size-override: justified"; then
+            echo "override=true" >> $GITHUB_OUTPUT
+          else
+            echo "override=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run bundle size check
+        if: steps.override.outputs.override == 'false'
+        run: node scripts/check-bundle-size.mjs

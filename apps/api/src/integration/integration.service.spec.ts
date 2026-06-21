@@ -3,7 +3,9 @@ import { Test } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { R2StorageService } from '../billing';
 import { ContentService } from '../content';
+import { NotificationService } from '../notification';
 import { AutomationJobEntity } from './entities/automation-job.entity';
 import { PlatformConnection } from './entities/platform-connection.entity';
 import { TokenVaultService } from './services/token-vault.service';
@@ -58,6 +60,11 @@ describe('IntegrationService', () => {
         },
         { provide: TokenVaultService, useFactory: mockTokenVault },
         { provide: ContentService, useFactory: mockContentService },
+        { provide: R2StorageService, useValue: { uploadBuffer: jest.fn() } },
+        {
+          provide: NotificationService,
+          useValue: { createNotification: jest.fn() },
+        },
       ],
     }).compile();
 

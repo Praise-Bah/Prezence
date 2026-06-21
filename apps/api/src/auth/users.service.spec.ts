@@ -16,8 +16,12 @@ describe('UsersService', () => {
           provide: getRepositoryToken(User),
           useValue: {
             findOne: jest.fn(),
+            find: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
+            update: jest
+              .fn()
+              .mockResolvedValue({ affected: 1, raw: [], generatedMaps: [] }),
           },
         },
       ],
@@ -28,28 +32,75 @@ describe('UsersService', () => {
   });
 
   describe('findByEmail', () => {
-    it('queries by email', async () => {
+    it('queries by email and excludes soft-deleted users', async () => {
       const user = { id: '1', email: 'a@b.com' } as User;
       repository.findOne.mockResolvedValue(user);
 
       const result = await service.findByEmail('a@b.com');
 
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { email: 'a@b.com' },
+        where: {
+          email: 'a@b.com',
+          deletedAt: expect.objectContaining({ _type: 'isNull' }),
+        },
       });
       expect(result).toBe(user);
+    });
+
+    it('returns null when user is soft-deleted (DB returns null due to filter)', async () => {
+      repository.findOne.mockResolvedValue(null);
+
+      const result = await service.findByEmail('deleted@example.com');
+
+      expect(result).toBeNull();
     });
   });
 
   describe('findById', () => {
-    it('queries by id', async () => {
+    it('queries by id and excludes soft-deleted users', async () => {
       const user = { id: '1', email: 'a@b.com' } as User;
       repository.findOne.mockResolvedValue(user);
 
       const result = await service.findById('1');
 
-      expect(repository.findOne).toHaveBeenCalledWith({ where: { id: '1' } });
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: {
+          id: '1',
+          deletedAt: expect.objectContaining({ _type: 'isNull' }),
+        },
+      });
       expect(result).toBe(user);
+    });
+
+    it('returns null when user is soft-deleted (DB returns null due to filter)', async () => {
+      repository.findOne.mockResolvedValue(null);
+
+      const result = await service.findById('deleted-id');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('softDelete', () => {
+    it('sets deletedAt to a Date without hard-deleting the row', async () => {
+      await service.softDelete('user-uuid');
+
+      expect(repository.update).toHaveBeenCalledWith(
+        'user-uuid',
+        expect.objectContaining({ deletedAt: expect.any(Date) }),
+      );
+    });
+
+    it('does not call repository.delete', async () => {
+      const deleteSpy = jest.fn();
+      Object.defineProperty(repository, 'delete', {
+        value: deleteSpy,
+        configurable: true,
+      });
+
+      await service.softDelete('user-uuid');
+
+      expect(deleteSpy).not.toHaveBeenCalled();
     });
   });
 

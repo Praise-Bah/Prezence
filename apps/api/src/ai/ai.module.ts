@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SharedModule } from '../shared';
 import { AiUsageLog } from './entities/ai-usage-log.entity';
 import { PromptRegistry } from './entities/prompt-registry.entity';
 import { ChatSession } from './entities/chat-session.entity';
@@ -13,6 +14,7 @@ import { AiController } from './ai.controller';
 
 @Module({
   imports: [
+    SharedModule,
     TypeOrmModule.forFeature([
       AiUsageLog,
       PromptRegistry,
