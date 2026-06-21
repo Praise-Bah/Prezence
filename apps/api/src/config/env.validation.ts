@@ -66,6 +66,13 @@ class EnvironmentVariables {
   })
   ENCRYPTION_KEY!: string;
 
+  @IsNotEmpty()
+  SKYVERN_API_KEY!: string;
+
+  @IsOptional()
+  @IsString()
+  SKYVERN_API_URL?: string;
+
   @IsOptional()
   @IsString()
   SMARTPROXY_HOST?: string;
