@@ -60,6 +60,8 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
 
   bundle-check:
     runs-on: ubuntu-latest
