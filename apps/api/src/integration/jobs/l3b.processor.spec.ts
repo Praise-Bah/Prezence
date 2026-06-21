@@ -24,7 +24,8 @@ const makeJob = (data: L3bJobData): Job<L3bJobData> =>
 
 describe('L3bProcessor', () => {
   let processor: L3bProcessor;
-  let jobRepo: { update: jest.Mock; findOne: jest.Mock };
+  let jobRepo: { update: jest.Mock; findOne: jest.Mock; createQueryBuilder: jest.Mock };
+  let qb: { update: jest.Mock; set: jest.Mock; where: jest.Mock; execute: jest.Mock };
   let connectionRepo: { findOne: jest.Mock };
   let skyvernService: { runTask: jest.Mock; waitForCompletion: jest.Mock };
   let r2Storage: { uploadBuffer: jest.Mock };
@@ -38,9 +39,16 @@ describe('L3bProcessor', () => {
   };
 
   beforeEach(async () => {
+    qb = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
     jobRepo = {
       update: jest.fn().mockResolvedValue(undefined),
       findOne: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
     };
     connectionRepo = { findOne: jest.fn().mockResolvedValue(null) };
     skyvernService = {
@@ -118,9 +126,12 @@ describe('L3bProcessor', () => {
         expect.any(Buffer),
         'image/png',
       );
-      expect(jobRepo.update).toHaveBeenCalledWith(
-        jobData.automationJobId,
+      expect(qb.set).toHaveBeenCalledWith(
         expect.objectContaining({ status: 'completed', layerUsed: 'L3B' }),
+      );
+      expect(qb.where).toHaveBeenCalledWith(
+        'id = :id AND status = :status',
+        { id: jobData.automationJobId, status: 'running' },
       );
       expect(notificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({ userId: jobData.userId, type: 'automation' }),
@@ -140,13 +151,16 @@ describe('L3bProcessor', () => {
 
       await processor.process(makeJob(jobData));
 
-      expect(jobRepo.update).toHaveBeenCalledWith(
-        jobData.automationJobId,
+      expect(qb.set).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'failed',
           layerUsed: 'L3B',
           errorMessage: 'Login page blocked by CAPTCHA',
         }),
+      );
+      expect(qb.where).toHaveBeenCalledWith(
+        'id = :id AND status = :status',
+        { id: jobData.automationJobId, status: 'running' },
       );
       expect(notificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
