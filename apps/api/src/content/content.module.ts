@@ -3,7 +3,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { AuthModule } from '../auth';
-import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
+import {
+  IntelligenceModule,
+  InterviewResponse,
+  MarketScore,
+  ProfileData,
+} from '../intelligence';
 import { RedisModule } from '../redis';
 import { SharedModule } from '../shared';
 import { ContentController } from './content.controller';
@@ -27,6 +32,7 @@ import { ScheduledPostProcessor } from './jobs/scheduled-post.processor';
     RedisModule,
     AuthModule,
     SharedModule,
+    IntelligenceModule,
   ],
   controllers: [ContentController],
   providers: [ContentService, ScheduledPostProcessor],

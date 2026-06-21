@@ -12,13 +12,19 @@ import { Queue } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { Repository } from 'typeorm';
 import { INTERVIEW_VERSION, QUEUE_NAMES } from '@prezence/config';
+import { ALL_PLATFORMS } from '../platforms';
 import type {
   ContentGenerationJobData,
   PlatformPublishJobData,
   SupportedPlatform,
 } from '@prezence/types';
 import { UsersService } from '../auth';
-import { InterviewResponse, MarketScore, ProfileData } from '../intelligence';
+import {
+  EditSignalService,
+  InterviewResponse,
+  MarketScore,
+  ProfileData,
+} from '../intelligence';
 import { REDIS_CLIENT } from '../redis';
 import type { SchedulePostDto } from './dto/schedule-post.dto';
 import { ScheduledPost } from './entities/scheduled-post.entity';
@@ -56,6 +62,7 @@ export class ContentService {
     @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
     private readonly usersService: UsersService,
+    private readonly editSignalService: EditSignalService,
   ) {}
 
   async getContent(
@@ -95,6 +102,41 @@ export class ContentService {
     return { content: profile.content, cached: false };
   }
 
+  async saveContent(
+    userId: string,
+    platform: SupportedPlatform,
+    editedContent: Record<string, string>,
+  ): Promise<void> {
+    const profile = await this.profileRepo.findOne({
+      where: { userId, platform },
+      order: { interviewVersion: 'DESC', generatedAt: 'DESC' },
+    });
+
+    if (!profile) {
+      throw new NotFoundException(
+        `No generated content found for ${platform}. Submit an interview first via POST /intelligence/generate.`,
+      );
+    }
+
+    for (const [field, edited] of Object.entries(editedContent)) {
+      const original = profile.content[field] ?? '';
+      await this.editSignalService.capture(
+        userId,
+        platform,
+        field,
+        original,
+        edited,
+      );
+    }
+
+    await this.profileRepo.update(profile.id, {
+      content: { ...profile.content, ...editedContent },
+    });
+
+    const cacheKey = `gen:${userId}:${platform}:v${String(profile.interviewVersion)}`;
+    await this.redis.del(cacheKey);
+  }
+
   async getAllPlatformSummary(userId: string): Promise<PlatformSummary[]> {
     const [profiles, scores] = await Promise.all([
       this.profileRepo.find({
@@ -117,16 +159,7 @@ export class ContentService {
       if (!scoreMap.has(s.platform)) scoreMap.set(s.platform, s);
     }
 
-    const platforms: SupportedPlatform[] = [
-      'linkedin',
-      'github',
-      'instagram',
-      'facebook',
-      'fiverr',
-      'freelancer',
-      'tiktok',
-      'twitter',
-    ];
+    const platforms = ALL_PLATFORMS.map((p) => p.platform);
 
     return Promise.all(
       platforms.map(async (platform) => {

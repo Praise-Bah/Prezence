@@ -16,8 +16,10 @@ import type {
   PlatformPublishJobData,
   SupportedPlatform,
 } from '@prezence/types';
-
+import { R2StorageService } from '../billing';
 import { ContentService } from '../content';
+import { NotificationService } from '../notification';
+import type { SkyvernWebhookDto } from './dto/skyvern-webhook.dto';
 
 export interface ConnectionSummary {
   id: string;
@@ -45,6 +47,8 @@ export class IntegrationService {
     private readonly automationQueue: Queue<PlatformPublishJobData>,
     private readonly tokenVault: TokenVaultService,
     private readonly contentService: ContentService,
+    private readonly r2Storage: R2StorageService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async connect(
@@ -186,5 +190,93 @@ export class IntegrationService {
       order: { createdAt: 'DESC' },
       take: 50,
     });
+  }
+
+  async handleSkyvernWebhook(dto: SkyvernWebhookDto): Promise<void> {
+    const job = await this.jobRepo.findOne({
+      where: { skyvernTaskId: dto.task_id },
+    });
+
+    if (!job) {
+      this.logger.warn(
+        `Skyvern webhook: no job found for task_id ${dto.task_id}`,
+      );
+      return;
+    }
+
+    // Idempotency: skip if the L3B worker already completed this job via polling
+    if (job.status === 'completed' || job.status === 'failed') {
+      this.logger.debug(
+        `Skyvern webhook: job ${job.id} already ${job.status} — skipping`,
+      );
+      return;
+    }
+
+    if (dto.status === 'completed') {
+      let proofUrl: string | null = null;
+      if (dto.screenshot_url) {
+        proofUrl = await this.downloadAndStoreScreenshot(
+          dto.screenshot_url,
+          job.userId,
+          job.platform,
+        );
+      }
+
+      await this.jobRepo.update(job.id, {
+        status: 'completed',
+        layerUsed: 'L3B',
+        proofUrl,
+        completedAt: new Date(),
+      });
+
+      await this.notificationService.createNotification({
+        userId: job.userId,
+        type: 'automation',
+        title: 'Profile updated via AI vision',
+        body: `Your ${job.platform} profile has been updated by Skyvern.`,
+        actionUrl: '/platforms',
+      });
+    } else {
+      const reason =
+        dto.failure_reason ?? `Skyvern task ended with status: ${dto.status}`;
+
+      await this.jobRepo.update(job.id, {
+        status: 'failed',
+        layerUsed: 'L3B',
+        errorMessage: reason,
+        completedAt: new Date(),
+      });
+
+      await this.notificationService.createNotification({
+        userId: job.userId,
+        type: 'automation',
+        title: 'Profile update failed',
+        body: `Your ${job.platform} profile could not be updated automatically.`,
+        actionUrl: '/platforms',
+      });
+    }
+
+    this.logger.log(
+      `Skyvern webhook handled for task ${dto.task_id} — job ${job.id}`,
+    );
+  }
+
+  private async downloadAndStoreScreenshot(
+    url: string,
+    userId: string,
+    platform: SupportedPlatform,
+  ): Promise<string | null> {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+      if (!res.ok) return null;
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const key = `proofs/${userId}/${platform}/l3b-webhook-${Date.now()}.png`;
+      return this.r2Storage.uploadBuffer(key, buffer, 'image/png');
+    } catch {
+      this.logger.warn(
+        `Failed to download/store Skyvern webhook screenshot for ${platform}/${userId}`,
+      );
+      return null;
+    }
   }
 }

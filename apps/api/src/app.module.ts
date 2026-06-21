@@ -8,6 +8,8 @@ import { AppService } from './app.service';
 import { AiModule } from './ai';
 import { AuthModule, JwtAuthGuard, RateLimitGuard, RolesGuard } from './auth';
 import { BillingModule } from './billing';
+import { DocumentsModule } from './documents';
+import { ImageModule } from './images';
 import { ContentModule } from './content';
 import { EventsModule } from './events';
 import { IntelligenceModule } from './intelligence';
@@ -34,6 +36,8 @@ import { RedisModule } from './redis';
     AiModule,
     AuthModule,
     BillingModule,
+    DocumentsModule,
+    ImageModule,
     EventsModule,
     IntelligenceModule,
     ContentModule,

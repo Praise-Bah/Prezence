@@ -5,6 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
+import { ImageService } from '../images';
 import { BillingService } from './billing.service';
 import { PaymentEvent } from './entities/payment-event.entity';
 import { SubscriptionRequest } from './entities/subscription-request.entity';
@@ -31,7 +32,7 @@ describe('BillingService', () => {
   let service: BillingService;
   let requestRepo: jest.Mocked<Repository<SubscriptionRequest>>;
   let eventRepo: jest.Mocked<Repository<PaymentEvent>>;
-  let r2: jest.Mocked<R2StorageService>;
+  let imageService: { uploadImage: jest.Mock };
   let queue: { add: jest.Mock };
 
   beforeEach(async () => {
@@ -63,6 +64,18 @@ describe('BillingService', () => {
           useValue: { uploadProof: jest.fn() },
         },
         {
+          provide: ImageService,
+          useValue: {
+            uploadImage: jest.fn().mockResolvedValue({
+              imageId: 'img-uuid',
+              baseUrl: 'https://r2.example.com/proof.jpg',
+              variants: {},
+              width: 800,
+              height: 600,
+            }),
+          },
+        },
+        {
           provide: ConfigService,
           useValue: { getOrThrow: jest.fn().mockReturnValue('+237600000000') },
         },
@@ -72,7 +85,7 @@ describe('BillingService', () => {
     service = module.get(BillingService);
     requestRepo = module.get(getRepositoryToken(SubscriptionRequest));
     eventRepo = module.get(getRepositoryToken(PaymentEvent));
-    r2 = module.get(R2StorageService);
+    imageService = module.get(ImageService);
 
     eventRepo.create.mockReturnValue({} as PaymentEvent);
     eventRepo.save.mockResolvedValue({} as PaymentEvent);
@@ -133,14 +146,13 @@ describe('BillingService', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('uploads file, updates request, and queues screening job', async () => {
+    it('uploads file via ImageService, updates request, and queues screening job', async () => {
       requestRepo.findOne.mockResolvedValue(mockRequest());
       requestRepo.update.mockResolvedValue({
         affected: 1,
         raw: [],
         generatedMaps: [],
       });
-      r2.uploadProof.mockResolvedValue('https://r2.example.com/proof.jpg');
 
       const result = await service.submitProof(
         'user-uuid',
@@ -148,10 +160,11 @@ describe('BillingService', () => {
         fakeFile,
       );
 
-      expect(r2.uploadProof).toHaveBeenCalledWith(
+      expect(imageService.uploadImage).toHaveBeenCalledWith(
+        fakeFile.buffer,
+        fakeFile.mimetype,
         'user-uuid',
-        'req-uuid',
-        fakeFile,
+        'screenshot',
       );
       expect(requestRepo.update).toHaveBeenCalledWith(
         'req-uuid',

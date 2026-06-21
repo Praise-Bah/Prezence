@@ -2,7 +2,7 @@
 
 export type UserRole = 'user' | 'institutional_admin' | 'support' | 'system_admin';
 
-export type SubscriptionPlan = 'free' | 'starter' | 'professional' | 'elite';
+export type SubscriptionPlan = 'free' | 'professional' | 'elite';
 
 export type SubscriptionStatus =
   | 'pending_ai_review'
@@ -67,8 +67,14 @@ export interface SubscriptionRequest {
 // ─── Platform Integration ──────────────────────────────────────────────────────
 
 export type SupportedPlatform =
+  // Phase 1 — Fully implemented
   | 'linkedin' | 'github' | 'instagram' | 'facebook'
-  | 'fiverr' | 'freelancer' | 'tiktok' | 'twitter';
+  | 'fiverr' | 'freelancer' | 'tiktok' | 'twitter'
+  // Phase 2 — L3A Playwright automation
+  | 'upwork' | 'youtube' | 'medium' | 'devto' | 'hashnode'
+  // Phase 3 — L3B Skyvern automation
+  | 'stackoverflow' | 'behance' | 'dribbble' | 'pinterest'
+  | 'snapchat' | 'twitch' | 'substack' | 'whatsapp_business' | 'reddit';
 
 export type IntegrationLayer = 'L1' | 'L2' | 'L3A' | 'L3B';
 
@@ -90,6 +96,13 @@ export interface WebhookRetryJobData {
   automationJobId: string;
   userId: string;
   platform: SupportedPlatform;
+}
+
+export interface L3bJobData {
+  userId: string;
+  platform: SupportedPlatform;
+  automationJobId: string;
+  contentSections: Record<string, string>;
 }
 
 export interface AutomationJob {
@@ -160,6 +173,29 @@ export interface QaResult {
   passes_constraints:  boolean;
   issues:              string[];
   suggestions:         string[];
+}
+
+// ─── Documents ───────────────────────────────────────────────────────────────
+
+export type DocumentStatus = 'pending' | 'extracting' | 'done' | 'failed';
+
+export type DocumentCategory =
+  | 'cv'
+  | 'certification'
+  | 'portfolio'
+  | 'reference_letters'
+  | 'awards'
+  | 'other';
+
+export interface UserDocument {
+  id: string;
+  filename: string;
+  mimeType: string;
+  fileSize: number | string;
+  status: DocumentStatus;
+  category: DocumentCategory | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── API Response shapes ─────────────────────────────────────────────────────

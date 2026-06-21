@@ -37,6 +37,7 @@ const mockUser: User = {
   pushNotifications: true,
   createdAt: new Date(),
   updatedAt: new Date(),
+  deletedAt: null,
 };
 
 const mockToken: RefreshToken = {
@@ -70,6 +71,7 @@ describe('AuthService', () => {
             findByEmail: jest.fn(),
             findById: jest.fn(),
             create: jest.fn(),
+            softDelete: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -456,6 +458,35 @@ describe('AuthService', () => {
       expect(resetTokenRepo.delete).toHaveBeenCalledWith({
         userId: mockUser.id,
         usedAt: expect.objectContaining({ _type: 'isNull' }),
+      });
+    });
+
+    describe('deleteUser', () => {
+      it('calls softDelete with the userId', async () => {
+        await service.deleteUser('user-uuid');
+
+        expect(usersService.softDelete).toHaveBeenCalledWith('user-uuid');
+      });
+
+      it('revokes all active refresh tokens for the user', async () => {
+        await service.deleteUser('user-uuid');
+
+        expect(refreshTokenRepo.update).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: 'user-uuid' }),
+          { revokedAt: expect.any(Date) },
+        );
+      });
+
+      it('does not call refreshTokenRepo.delete (no hard delete)', async () => {
+        const deleteSpy = jest.fn();
+        Object.defineProperty(refreshTokenRepo, 'delete', {
+          value: deleteSpy,
+          configurable: true,
+        });
+
+        await service.deleteUser('user-uuid');
+
+        expect(deleteSpy).not.toHaveBeenCalled();
       });
     });
 

@@ -1,10 +1,15 @@
-import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
+import {
+  InjectQueue,
+  OnWorkerEvent,
+  Processor,
+  WorkerHost,
+} from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { Job } from 'bullmq';
+import type { Job, Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
-import type { WebhookRetryJobData } from '@prezence/types';
+import type { L3bJobData, WebhookRetryJobData } from '@prezence/types';
 import { EventsGateway } from '../../events';
 import { NotificationService } from '../../notification';
 import { AutomationJobEntity } from '../entities/automation-job.entity';
@@ -16,6 +21,8 @@ export class WebhookRetryProcessor extends WorkerHost {
   constructor(
     @InjectRepository(AutomationJobEntity)
     private readonly jobRepo: Repository<AutomationJobEntity>,
+    @InjectQueue(QUEUE_NAMES.l3b_jobs)
+    private readonly l3bQueue: Queue<L3bJobData>,
     private readonly notificationService: NotificationService,
     private readonly eventsGateway: EventsGateway,
   ) {
@@ -79,32 +86,35 @@ export class WebhookRetryProcessor extends WorkerHost {
     const { automationJobId, userId, platform } = job.data;
 
     this.logger.warn(
-      `Webhook L2 exhausted retries for ${platform} job ${automationJobId}`,
+      `L2 webhook exhausted for ${platform} job ${automationJobId} — escalating to L3B`,
     );
 
+    // Extract contentSections that were embedded in the Make.com payload
+    const contentSections =
+      (job.data.payload as { contentSections?: Record<string, string> })
+        .contentSections ?? {};
+
     await this.jobRepo.update(automationJobId, {
-      status: 'failed',
-      errorMessage: `Make.com webhook failed after ${attemptsAllowed} attempts`,
-      completedAt: new Date(),
+      status: 'retrying',
+      layerUsed: 'L3B',
     });
+
+    await this.l3bQueue.add(
+      'l3b-publish',
+      { userId, platform, automationJobId, contentSections },
+      {
+        attempts: 1,
+        backoff: { type: 'exponential', delay: 5_000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
 
     this.eventsGateway.emitJobUpdate(userId, {
       jobId: automationJobId,
       type: 'automation',
       platform,
-      status: 'failed',
-      errorMessage: `Platform ${platform} update failed (webhook exhausted)`,
+      status: 'running',
     });
-
-    await Promise.allSettled([
-      this.notificationService.sendContentFailed(userId, platform),
-      this.notificationService.createNotification({
-        userId,
-        type: 'automation',
-        title: 'Update failed',
-        body: `Your ${platform} profile could not be updated. Please retry.`,
-        actionUrl: '/platforms',
-      }),
-    ]);
   }
 }

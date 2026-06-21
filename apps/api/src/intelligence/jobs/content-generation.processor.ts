@@ -17,6 +17,7 @@ import { NotificationService } from '../../notification';
 import { InterviewResponse } from '../entities/interview-response.entity';
 import { ProfileData } from '../entities/profile-data.entity';
 import { EmbeddingService } from '../services/embedding.service';
+import { MarketSignalService } from '../market-signal.service';
 import type { MarketFitJobData } from './market-score.processor';
 
 function stripCodeFences(raw: string): string {
@@ -38,6 +39,7 @@ export class ContentGenerationProcessor extends WorkerHost {
     private readonly aiUsage: AiUsageService,
     private readonly promptRegistry: PromptRegistryService,
     private readonly embeddingService: EmbeddingService,
+    private readonly marketSignalService: MarketSignalService,
     private readonly notificationService: NotificationService,
     private readonly eventsGateway: EventsGateway,
     @InjectQueue(QUEUE_NAMES.mfs_compute)
@@ -141,6 +143,17 @@ export class ContentGenerationProcessor extends WorkerHost {
             .join('\n\n')
         : 'No similar profiles found yet.';
 
+    // 3b. Fetch live market signals (cached 24h in Redis)
+    const role = String(interview.answers['title'] ?? 'software developer');
+    const trendingSkills = await this.marketSignalService.fetchSignals(
+      platform,
+      role,
+    );
+    const trendingSkillsText =
+      trendingSkills.length > 0
+        ? trendingSkills.join(', ')
+        : 'No market signals available.';
+
     // 4. Load generation prompt
     const genPrompt = await this.promptRegistry.getActive('generate_profile');
     const charLimits = JSON.stringify(
@@ -153,6 +166,7 @@ export class ContentGenerationProcessor extends WorkerHost {
       char_limits: charLimits,
       answers: answersText,
       rag_context: ragContext,
+      trending_skills: trendingSkillsText,
       language: userLanguage,
     });
 
@@ -219,6 +233,21 @@ export class ContentGenerationProcessor extends WorkerHost {
       },
       ['userId', 'platform', 'interviewVersion'],
     );
+
+    // Step 9: Embed the generated profile so future generation jobs can
+    // retrieve this user's prior profiles as RAG context (top-2 profile history).
+    const savedProfile = await this.profileRepo.findOne({
+      where: { userId, platform, interviewVersion },
+    });
+    if (savedProfile) {
+      await this.embeddingService.generateAndStore(
+        userId,
+        'generated_profile',
+        savedProfile.id,
+        JSON.stringify(generated.sections),
+        { platform, interviewVersion },
+      );
+    }
 
     // 8. Enqueue market-fit score computation (runs in dedicated mfs-compute worker)
     await this.mfsQueue.add(

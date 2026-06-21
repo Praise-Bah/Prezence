@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import { AuthModule } from '../auth';
+import { ImageModule } from '../images';
 import { NotificationModule } from '../notification';
 import { AdminBillingController } from './admin-billing.controller';
 import { AdminBillingService } from './admin-billing.service';
@@ -21,6 +22,7 @@ import { ScreenshotScreenerService } from './screenshot-screener.service';
     TypeOrmModule.forFeature([SubscriptionRequest, PaymentEvent]),
     BullModule.registerQueue({ name: QUEUE_NAMES.screenshot_screening }),
     AuthModule,
+    ImageModule,
     NotificationModule,
   ],
   controllers: [BillingController, AdminBillingController],
@@ -31,6 +33,6 @@ import { ScreenshotScreenerService } from './screenshot-screener.service';
     ScreenshotScreenerService,
     ScreenshotScreeningProcessor,
   ],
-  exports: [BillingService],
+  exports: [BillingService, R2StorageService],
 })
 export class BillingModule {}

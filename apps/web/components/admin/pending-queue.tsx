@@ -9,7 +9,7 @@ import { reviewRequestAction } from '../../lib/actions/admin.actions';
 import { Button } from '../ui/button';
 
 const PLAN_LABELS: Record<string, string> = {
-  starter: 'Starter — 3,000 XAF',
+  free: 'Free — 3,000 XAF',
   professional: 'Professional — 6,000 XAF',
   elite: 'Elite — 12,000 XAF',
 };

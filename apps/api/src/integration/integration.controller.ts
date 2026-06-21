@@ -4,18 +4,23 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseEnumPipe,
   Post,
   Query,
   Redirect,
   Request,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { SupportedPlatform } from '@prezence/types';
-import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
+import { PLATFORM_DESCRIPTIONS } from '@prezence/config';
+import { ALL_PLATFORMS, SUPPORTED_PLATFORM_ENUM } from '../platforms';
 import { CurrentUser, Public } from '../auth';
 import type { AuthenticatedUser } from '../auth';
 import { ConnectPlatformDto } from './dto/connect-platform.dto';
+import { SkyvernWebhookDto } from './dto/skyvern-webhook.dto';
 import { IntegrationService } from './integration.service';
 import { OAuthService, type OAuthPlatform } from './services/oauth.service';
 
@@ -26,7 +31,16 @@ export class IntegrationController {
   constructor(
     private readonly integrationService: IntegrationService,
     private readonly oauthService: OAuthService,
+    private readonly config: ConfigService,
   ) {}
+
+  @Get('available-platforms')
+  getAvailablePlatforms() {
+    return ALL_PLATFORMS.map((p) => ({
+      ...p,
+      description: PLATFORM_DESCRIPTIONS[p.platform] ?? '',
+    }));
+  }
 
   @Get('connections')
   getConnections(@Request() req: { user: { userId: string } }) {
@@ -70,6 +84,22 @@ export class IntegrationController {
   @Get('jobs')
   getJobs(@Request() req: { user: { userId: string } }) {
     return this.integrationService.getJobs(req.user.userId);
+  }
+
+  // ─── Skyvern webhook (called by self-hosted Skyvern, not by the user) ──────
+
+  @Public()
+  @Post('skyvern/webhook')
+  async skyvernWebhook(
+    @Headers('x-api-key') apiKey: string | undefined,
+    @Body() dto: SkyvernWebhookDto,
+  ): Promise<{ ok: boolean }> {
+    const secret = this.config.getOrThrow<string>('SKYVERN_WEBHOOK_SECRET');
+    if (!apiKey || apiKey !== secret) {
+      throw new UnauthorizedException('Invalid Skyvern webhook API key');
+    }
+    await this.integrationService.handleSkyvernWebhook(dto);
+    return { ok: true };
   }
 
   // ─── OAuth ──────────────────────────────────────────────────────────────────

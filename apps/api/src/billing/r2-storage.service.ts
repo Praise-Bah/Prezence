@@ -29,6 +29,25 @@ export class R2StorageService {
     });
   }
 
+  async uploadBuffer(
+    key: string,
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<string> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        ContentLength: buffer.length,
+      }),
+    );
+    const url = `${this.publicUrl}/${key}`;
+    this.logger.log(`Uploaded automation proof: ${key}`);
+    return url;
+  }
+
   async uploadProof(
     userId: string,
     requestId: string,

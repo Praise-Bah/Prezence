@@ -11,7 +11,6 @@ interface TopbarProps {
 
 const planVariant: Record<string, 'default' | 'success' | 'info' | 'purple'> = {
   free: 'default',
-  starter: 'info',
   professional: 'purple',
   elite: 'success',
 };

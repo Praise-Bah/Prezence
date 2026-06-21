@@ -27,7 +27,7 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['free', 'starter', 'professional', 'elite'],
+    enum: ['free', 'professional', 'elite'],
     default: 'free',
   })
   plan!: SubscriptionPlan;
@@ -61,4 +61,12 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
+
+  @Column({
+    name: 'deleted_at',
+    type: 'timestamptz',
+    nullable: true,
+    default: null,
+  })
+  deletedAt!: Date | null;
 }

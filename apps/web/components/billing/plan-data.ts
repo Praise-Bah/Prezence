@@ -1,7 +1,7 @@
 import { PLAN_PRICES_XAF } from '@prezence/config';
 import type { SubscriptionPlan } from '@prezence/types';
 
-export type PaidPlan = Exclude<SubscriptionPlan, 'free'>;
+export type PaidPlan = SubscriptionPlan;
 
 export type PlanButtonVariant = 'blue' | 'green-gradient';
 
@@ -24,9 +24,9 @@ function formatXAF(amount: number): string {
 
 export const PLANS: PlanDefinition[] = [
   {
-    name: 'starter',
+    name: 'free',
     displayName: 'Free',
-    price: formatXAF(PLAN_PRICES_XAF.starter),
+    price: formatXAF(PLAN_PRICES_XAF.free),
     priceSuffix: null,
     billingNote: 'One-time payment',
     features: [
@@ -85,9 +85,9 @@ export const PLAN_MODAL_DISPLAY: Record<
   PaidPlan,
   { label: string; price: string; priceColor: string }
 > = {
-  starter: {
+  free: {
     label: 'Prezence Free',
-    price: `${formatXAF(PLAN_PRICES_XAF.starter)} (one-time)`,
+    price: `${formatXAF(PLAN_PRICES_XAF.free)} (one-time)`,
     priceColor: '#1a1a2e',
   },
   professional: {

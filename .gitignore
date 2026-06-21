@@ -40,6 +40,9 @@ Thumbs.db
 !.claude/skills/
 apps/mobile/.claude/
 
+# Bundle size override (must be reviewed before committing)
+.bundle-size-override
+
 # Logs
 *.log
 npm-debug.log*

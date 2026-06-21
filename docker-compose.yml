@@ -1,0 +1,38 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+  # Self-hosted Skyvern — AI vision automation (L3B layer)
+  # Binds to localhost:8000; API service reaches it via SKYVERN_API_URL=http://localhost:8000
+  skyvern:
+    image: skyverninc/skyvern:latest
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - PORT=8000
+      - LLM_CONFIG_TYPE=ANTHROPIC
+      - LLM_CONFIG_NAME=claude-sonnet-4-6
+      - BROWSER_TYPE=chromium-headless-shell
