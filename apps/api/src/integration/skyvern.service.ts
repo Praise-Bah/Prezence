@@ -41,7 +41,7 @@ export class SkyvernService {
     private readonly config: ConfigService,
     private readonly cb: CircuitBreakerService,
   ) {
-    this.apiUrl = config.get<string>('SKYVERN_API_URL') ?? '';
+    this.apiUrl = config.get<string>('SKYVERN_API_URL') ?? 'https://api.skyvern.com';
     this.apiKey = config.getOrThrow<string>('SKYVERN_API_KEY');
 
     this.fireRunTask = cb.wrap(
