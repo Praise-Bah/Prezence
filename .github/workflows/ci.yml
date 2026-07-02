@@ -45,6 +45,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Shared workspace packages must be built first (their dist) so that
+      # typecheck, lint and tests can resolve @prezence/config and @prezence/types.
+      - name: Build shared packages
+        run: pnpm --filter "./packages/*" build
+
       - name: Type check
         run: pnpm typecheck
 
