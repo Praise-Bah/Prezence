@@ -1,0 +1,36 @@
+# Keep the Docker build context small and secret-free. Everything here is
+# reinstalled/rebuilt inside the image, so sending it wastes time and (for env
+# files) risks leaking secrets into image layers.
+
+# Dependencies
+**/node_modules
+.pnpm-store
+
+# Build outputs
+**/dist
+**/.next
+**/.expo
+**/.turbo
+.turbo
+*.tsbuildinfo
+
+# Env & secrets — MUST NOT enter the build context
+.env
+.env.*
+!.env.example
+.env.production
+.doppler
+
+# VCS & CI
+.git
+.github
+
+# Mobile app (not built in the api/web images)
+apps/mobile
+
+# Editor / OS / logs
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.log
