@@ -5,16 +5,24 @@ import {
   Param,
   ParseEnumPipe,
   Post,
+  Query,
   Request,
 } from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
+import { Roles } from '../auth';
 import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
 import { GenerateContentDto } from './dto/generate-content.dto';
+import { UpsertKnowledgeBodyDto } from './dto/upsert-knowledge.dto';
+import type { PlatformKnowledge } from './entities/platform-knowledge.entity';
 import { IntelligenceService } from './intelligence.service';
+import { PlatformKnowledgeService } from './services/platform-knowledge.service';
 
 @Controller('intelligence')
 export class IntelligenceController {
-  constructor(private readonly intelligenceService: IntelligenceService) {}
+  constructor(
+    private readonly intelligenceService: IntelligenceService,
+    private readonly platformKnowledge: PlatformKnowledgeService,
+  ) {}
 
   @Post('generate')
   async generate(
@@ -40,5 +48,21 @@ export class IntelligenceController {
     platform: SupportedPlatform,
   ) {
     return this.intelligenceService.getMarketFit(req.user.userId, platform);
+  }
+
+  @Post('admin/knowledge')
+  @Roles('system_admin')
+  async upsertKnowledge(
+    @Body() dto: UpsertKnowledgeBodyDto,
+  ): Promise<PlatformKnowledge> {
+    return this.platformKnowledge.upsert(dto);
+  }
+
+  @Get('admin/knowledge')
+  @Roles('system_admin')
+  async listKnowledge(
+    @Query('platform') platform?: string,
+  ): Promise<PlatformKnowledge[]> {
+    return this.platformKnowledge.list(platform);
   }
 }

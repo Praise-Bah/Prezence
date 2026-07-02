@@ -1,10 +1,20 @@
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
+import { CircuitBreakerService } from '../shared';
 import { ModelRouterService } from './services/model-router.service';
 
 const mockConfigService = () => ({
   getOrThrow: jest.fn().mockReturnValue('test-api-key'),
 });
+
+// Pass-through: wrap returns fn unchanged so circuit breaker is transparent in unit tests
+const mockCb = {
+  wrap: jest
+    .fn()
+    .mockImplementation(
+      (_name: string, fn: (...args: unknown[]) => Promise<unknown>) => fn,
+    ),
+};
 
 describe('ModelRouterService', () => {
   let service: ModelRouterService;
@@ -15,6 +25,7 @@ describe('ModelRouterService', () => {
       providers: [
         ModelRouterService,
         { provide: ConfigService, useFactory: mockConfigService },
+        { provide: CircuitBreakerService, useValue: mockCb },
       ],
     }).compile();
 

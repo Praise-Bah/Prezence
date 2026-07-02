@@ -359,6 +359,14 @@ export class AuthService {
     return { message: 'Password reset successfully. Please log in.' };
   }
 
+  async deleteUser(userId: string): Promise<void> {
+    await this.usersService.softDelete(userId);
+    await this.refreshTokenRepository.update(
+      { userId, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+  }
+
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }

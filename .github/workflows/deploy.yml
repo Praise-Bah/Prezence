@@ -1,0 +1,66 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-api:
+    name: Deploy API (CX41)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API to Hetzner CX41
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.API_SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/prezence
+
+            echo "── Pulling latest code ──────────────────────"
+            git pull origin main
+
+            echo "── Installing dependencies ───────────────────"
+            pnpm install --frozen-lockfile
+
+            echo "── Building API ──────────────────────────────"
+            pnpm build --filter=api
+
+            echo "── Reloading API with PM2 ────────────────────"
+            pm2 reload ecosystem.config.js --only prezence-api --env production
+
+            echo "── Starting/updating Skyvern container ───────"
+            docker compose pull skyvern
+            docker compose up -d skyvern
+
+            echo "── API deploy complete ───────────────────────"
+
+  deploy-web:
+    name: Deploy Web (CX31)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Web to Hetzner CX31
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.WEB_SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/prezence
+
+            echo "── Pulling latest code ──────────────────────"
+            git pull origin main
+
+            echo "── Installing dependencies ───────────────────"
+            pnpm install --frozen-lockfile
+
+            echo "── Building Web ──────────────────────────────"
+            pnpm build --filter=web
+
+            echo "── Reloading Web with PM2 ────────────────────"
+            pm2 reload ecosystem.config.js --only prezence-web --env production
+
+            echo "── Web deploy complete ───────────────────────"

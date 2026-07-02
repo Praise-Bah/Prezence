@@ -38,6 +38,7 @@ export class MetaStrategy extends BasePublisherStrategy {
     accessToken: string,
     content: Record<string, string>,
     platform: SupportedPlatform,
+    _userId: string,
   ): Promise<string | null> {
     const pages = await this.getPages(accessToken);
     if (pages.length === 0) {

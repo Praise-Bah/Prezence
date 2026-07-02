@@ -1,12 +1,17 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import {
+  InjectQueue,
+  OnWorkerEvent,
+  Processor,
+  WorkerHost,
+} from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectQueue } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Job, Queue } from 'bullmq';
 import { Repository } from 'typeorm';
 import { QUEUE_NAMES } from '@prezence/config';
 import type {
+  L3bJobData,
   PlatformPublishJobData,
   SupportedPlatform,
   WebhookRetryJobData,
@@ -33,6 +38,8 @@ export class AutomationProcessor extends WorkerHost {
     private readonly connectionRepo: Repository<PlatformConnection>,
     @InjectQueue(QUEUE_NAMES.webhook_retry)
     private readonly webhookRetryQueue: Queue<WebhookRetryJobData>,
+    @InjectQueue(QUEUE_NAMES.l3b_jobs)
+    private readonly l3bQueue: Queue<L3bJobData>,
     private readonly tokenVault: TokenVaultService,
     private readonly config: ConfigService,
     private readonly githubStrategy: GithubStrategy,
@@ -79,6 +86,7 @@ export class AutomationProcessor extends WorkerHost {
         accessToken,
         contentSections,
         platform,
+        userId,
       );
 
       await this.jobRepo.update(automationJobId, {
@@ -189,6 +197,47 @@ export class AutomationProcessor extends WorkerHost {
 
       throw err;
     }
+  }
+
+  @OnWorkerEvent('failed')
+  async onFailed(job: Job<PlatformPublishJobData>): Promise<void> {
+    const attemptsAllowed = job.opts.attempts ?? 1;
+    if (job.attemptsMade < attemptsAllowed) return;
+
+    const { userId, platform, automationJobId, contentSections, layer } =
+      job.data;
+
+    // Only L3A platforms escalate to L3B from here.
+    // L1 platforms that have L2 configured never reach this handler
+    // (they don't re-throw). L1 platforms without L2 are terminal.
+    if (layer !== 'L3A') return;
+
+    this.logger.log(
+      `L3A exhausted for ${platform} job ${automationJobId} — escalating to L3B`,
+    );
+
+    await this.jobRepo.update(automationJobId, {
+      status: 'retrying',
+      layerUsed: 'L3B',
+    });
+
+    await this.l3bQueue.add(
+      'l3b-publish',
+      { userId, platform, automationJobId, contentSections },
+      {
+        attempts: 1,
+        backoff: { type: 'exponential', delay: 5_000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+
+    this.eventsGateway.emitJobUpdate(userId, {
+      jobId: automationJobId,
+      type: 'automation',
+      platform,
+      status: 'running',
+    });
   }
 
   private pickStrategy(platform: SupportedPlatform): BasePublisherStrategy {

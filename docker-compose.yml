@@ -1,0 +1,57 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    # Give graceful shutdown room to drain in-flight BullMQ jobs and close
+    # Playwright browsers on SIGTERM before Docker escalates to SIGKILL (the
+    # default grace period is only 10s, which can cut off a long publish job).
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://localhost:3001/health']
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+
+  web:
+    # Production web runs on Vercel. This service is only for OPTIONAL
+    # self-hosting of the frontend on the VPS; it does NOT start by default.
+    # To run it too:  docker compose --profile web up -d
+    profiles: ['web']
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+  # Self-hosted Skyvern — AI vision automation (L3B layer)
+  # Binds to localhost:8000; API service reaches it via SKYVERN_API_URL=http://localhost:8000
+  # Optional: the API runs fine without it (the publish cascade just stops at
+  # L3A/notify). Disabled by default; enable with:
+  #   docker compose --profile skyvern up -d
+  skyvern:
+    profiles: ['skyvern']
+    image: skyverninc/skyvern:latest
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - PORT=8000
+      - LLM_CONFIG_TYPE=ANTHROPIC
+      - LLM_CONFIG_NAME=claude-sonnet-4-6
+      - BROWSER_TYPE=chromium-headless-shell

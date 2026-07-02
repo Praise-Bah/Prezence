@@ -6,5 +6,6 @@ export abstract class BasePublisherStrategy {
     accessToken: string,
     content: Record<string, string>,
     platform: SupportedPlatform,
+    userId: string,
   ): Promise<string | null>;
 }

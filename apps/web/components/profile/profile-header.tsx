@@ -7,7 +7,6 @@ const AVATAR = '/assets/placeholders/shared-user-avatar@72x72.webp';
 
 const planVariant: Record<string, 'default' | 'success' | 'info' | 'purple'> = {
   free: 'default',
-  starter: 'info',
   professional: 'purple',
   elite: 'success',
 };

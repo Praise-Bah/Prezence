@@ -6,7 +6,10 @@ import { CACHE_TTL } from '@prezence/config';
 import type { SupportedPlatform } from '@prezence/types';
 import { PlatformConnection, TokenVaultService } from '../integration';
 import { REDIS_CLIENT } from '../redis';
+import { FiverrChecker } from './checkers/fiverr.checker';
 import { GithubChecker } from './checkers/github.checker';
+import { LinkedInChecker } from './checkers/linkedin.checker';
+import { MetaChecker } from './checkers/meta.checker';
 import { PlatformHealthCheck } from './entities/platform-health-check.entity';
 import type { HealthStatus } from './entities/platform-health-check.entity';
 
@@ -29,6 +32,9 @@ export class PlatformHealthService {
     private readonly healthRepo: Repository<PlatformHealthCheck>,
     private readonly tokenVault: TokenVaultService,
     private readonly githubChecker: GithubChecker,
+    private readonly metaChecker: MetaChecker,
+    private readonly linkedInChecker: LinkedInChecker,
+    private readonly fiverrChecker: FiverrChecker,
     @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
   ) {}
@@ -70,16 +76,26 @@ export class PlatformHealthService {
     };
 
     try {
-      const accessToken = this.tokenVault.decrypt(
-        connection.accessTokenCiphertext,
-        connection.accessTokenIv,
-        connection.accessTokenTag,
-      );
-
       if (platform === 'github') {
+        const accessToken = this.tokenVault.decrypt(
+          connection.accessTokenCiphertext,
+          connection.accessTokenIv,
+          connection.accessTokenTag,
+        );
         result = await this.githubChecker.check(accessToken);
+      } else if (platform === 'facebook' || platform === 'instagram') {
+        const accessToken = this.tokenVault.decrypt(
+          connection.accessTokenCiphertext,
+          connection.accessTokenIv,
+          connection.accessTokenTag,
+        );
+        result = await this.metaChecker.check(accessToken);
+      } else if (platform === 'linkedin') {
+        result = await this.linkedInChecker.check();
+      } else if (platform === 'fiverr') {
+        result = await this.fiverrChecker.check();
       } else {
-        // L3A platforms — no API check available yet, report as healthy if connected
+        // freelancer, tiktok, twitter — no API check available yet
         result = { status: 'healthy', responseMs: null, errorMessage: null };
       }
     } catch (err) {

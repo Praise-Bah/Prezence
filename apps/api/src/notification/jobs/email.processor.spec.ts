@@ -98,7 +98,7 @@ describe('EmailProcessor', () => {
     mockUsersService.findById.mockResolvedValue(mockUser);
 
     await processor.process(
-      makeJob('payment_provisional', 'user-1', { plan: 'starter' }),
+      makeJob('payment_provisional', 'user-1', { plan: 'free' }),
     );
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1].body as string) as {

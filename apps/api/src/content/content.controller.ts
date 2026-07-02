@@ -6,6 +6,7 @@ import {
   Param,
   ParseEnumPipe,
   ParseUUIDPipe,
+  Patch,
   Post,
   Request,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { CurrentUser } from '../auth';
 import { SUPPORTED_PLATFORM_ENUM } from '../platforms';
 import { ContentService } from './content.service';
 import { RegenerateDto } from './dto/regenerate.dto';
+import { SaveContentDto } from './dto/save-content.dto';
 import { SchedulePostDto } from './dto/schedule-post.dto';
 
 @Controller('content')
@@ -59,6 +61,16 @@ export class ContentController {
       dto.platform,
       dto.language,
     );
+  }
+
+  @Patch(':platform')
+  saveContent(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('platform', new ParseEnumPipe(SUPPORTED_PLATFORM_ENUM))
+    platform: SupportedPlatform,
+    @Body() dto: SaveContentDto,
+  ) {
+    return this.contentService.saveContent(user.userId, platform, dto.content);
   }
 
   @Get(':platform')

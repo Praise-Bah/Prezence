@@ -19,7 +19,7 @@ export class SubscriptionRequest {
   @Column({ name: 'user_id' })
   userId!: string;
 
-  @Column({ type: 'enum', enum: ['free', 'starter', 'professional', 'elite'] })
+  @Column({ type: 'enum', enum: ['free', 'professional', 'elite'] })
   plan!: SubscriptionPlan;
 
   @Column({ name: 'amount_xaf', type: 'int' })

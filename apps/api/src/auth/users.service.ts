@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, IsNull, Repository } from 'typeorm';
 import type { SubscriptionPlan } from '@prezence/types';
 import type { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -24,16 +24,24 @@ export class UsersService {
   ) {}
 
   findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.usersRepository.findOne({
+      where: { email, deletedAt: IsNull() },
+    });
   }
 
   findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+    return this.usersRepository.findOne({ where: { id, deletedAt: IsNull() } });
   }
 
   findManyByIds(ids: string[]): Promise<User[]> {
     if (ids.length === 0) return Promise.resolve([]);
-    return this.usersRepository.find({ where: { id: In(ids) } });
+    return this.usersRepository.find({
+      where: { id: In(ids), deletedAt: IsNull() },
+    });
+  }
+
+  async softDelete(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { deletedAt: new Date() });
   }
 
   async updateProfile(userId: string, dto: UpdateUserDto): Promise<User> {
@@ -49,7 +57,9 @@ export class UsersService {
       patch.pushNotifications = dto.push_notifications;
 
     await this.usersRepository.update(userId, patch);
-    return this.usersRepository.findOneOrFail({ where: { id: userId } });
+    return this.usersRepository.findOneOrFail({
+      where: { id: userId, deletedAt: IsNull() },
+    });
   }
 
   async updatePlan(

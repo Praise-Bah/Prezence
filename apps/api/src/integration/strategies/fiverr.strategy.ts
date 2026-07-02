@@ -4,6 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { SupportedPlatform } from '@prezence/types';
+import { R2StorageService } from '../../billing';
 import { ProxyService } from '../services/proxy.service';
 import { BasePublisherStrategy } from './base-publisher.strategy';
 
@@ -22,7 +23,10 @@ const SEL = {
 export class FiverrStrategy extends BasePublisherStrategy {
   private readonly logger = new Logger(FiverrStrategy.name);
 
-  constructor(private readonly proxy: ProxyService) {
+  constructor(
+    private readonly proxy: ProxyService,
+    private readonly r2Storage: R2StorageService,
+  ) {
     super();
   }
 
@@ -30,6 +34,7 @@ export class FiverrStrategy extends BasePublisherStrategy {
     accessToken: string,
     content: Record<string, string>,
     _platform: SupportedPlatform,
+    userId: string,
   ): Promise<string | null> {
     const { chromium } = await import('playwright-core').catch(() => {
       throw new ServiceUnavailableException(
@@ -102,14 +107,21 @@ export class FiverrStrategy extends BasePublisherStrategy {
           );
         });
 
-      // Take a screenshot as proof
-      const screenshotBuffer = await page.screenshot({ fullPage: false });
-      this.logger.log('Fiverr profile update completed');
+      // Take a full-page screenshot as proof of update
+      const screenshotBuffer = await page.screenshot({
+        fullPage: true,
+        type: 'png',
+      });
 
-      // TODO: upload screenshotBuffer to R2 and return the public URL.
-      // For now, return null (proof_url optional per BasePublisherStrategy contract).
-      void screenshotBuffer;
-      return null;
+      const key = `proofs/${userId}/fiverr/${Date.now()}.png`;
+      const proofUrl = await this.r2Storage.uploadBuffer(
+        key,
+        screenshotBuffer,
+        'image/png',
+      );
+
+      this.logger.log(`Fiverr profile update completed — proof: ${proofUrl}`);
+      return proofUrl;
     } finally {
       await browser.close();
     }
